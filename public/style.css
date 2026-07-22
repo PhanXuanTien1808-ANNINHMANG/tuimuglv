@@ -1,0 +1,372 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ==========================================
+   1. HÌNH NỀN FULL MÀN HÌNH & ĐÃ GIẢM ĐỘ MỜ
+   ========================================== */
+body {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 15px;
+  overflow: hidden; /* Dọn dẹp thanh cuộn nếu có */
+}
+
+/* Lớp ảnh nền phía sau */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  
+  /* 🖼️ Đường dẫn tới file ảnh nền của bạn */
+  background-image: url('images/Damas1.jpg'); 
+  
+  /* 📐 BẮT BUỘC FULL 100% MÀN HÌNH (Không bị khoảng trống 2 bên): */
+  background-size: cover;          
+  background-position: center;    
+  background-repeat: no-repeat;
+  
+  /* ✨ ĐÃ GIẢM ĐỘ MỜ: Giảm xuống còn 2px cho nét rõ hình (hoặc 3px) */
+  filter: blur(2px);
+  
+  /* Phóng nhẹ 3% để triệt tiêu vệt trắng ở mép màn hình khi làm mờ */
+  transform: scale(1.03);         
+  z-index: -1;                     
+}
+
+/* ==========================================
+   2. KHUNG CHÍNH (GLASSMORPHISM GIỮ NGUYÊN NÉT)
+   ========================================== */
+.main-container {
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  
+  /* Nền trắng mờ nhẹ 85% giúp nổi bật form trên nền ảnh */
+  background: rgba(255, 255, 255, 0.85) !important;
+  
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  
+  padding: 25px 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+}
+
+/* ==========================================
+   2. KHUNG CHÍNH (GLASSMORPHISM MỜ KÍNH)
+   ========================================== */
+.main-container {
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  
+  /* Nền trắng mờ 80% */
+  background: rgba(255, 255, 255, 0.82) !important;
+  
+  /* Lớp mờ kính bọc quanh form */
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  
+  padding: 25px 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+/* ==========================================
+   2. KHUNG CHÍNH (HIỆU ỨNG KÍNH MỜ GLASSMORPHISM)
+   ========================================== */
+.main-container {
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  
+  /* Nền trắng trong suốt 75% */
+  background: rgba(255, 255, 255, 0.78) !important;
+  
+  /* ✨ LÀM MỜ HÌNH NỀN PHÍA SAU (BACKDROP BLUR) */
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  
+  padding: 25px 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.18);
+}
+
+/* Logo ở trang Đăng nhập */
+.logo-box {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.app-logo {
+  width: 85px;
+  height: 85px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+}
+
+.title {
+  font-size: 1.6rem;
+  color: #d63031;
+  margin-bottom: 6px;
+  font-weight: 800;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: #636e72;
+  margin-bottom: 20px;
+}
+
+.welcome-card {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(6px);
+  padding: 12px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  margin-bottom: 15px;
+}
+
+.welcome-card h3 {
+  font-size: 1.05rem;
+  color: #2d3436;
+}
+
+.welcome-card p {
+  font-size: 0.85rem;
+  color: #636e72;
+  margin-top: 4px;
+}
+
+.btn-primary {
+  background: #ff7675;
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  font-size: 0.95rem;
+  font-weight: bold;
+  border-radius: 25px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(255, 118, 117, 0.4);
+  transition: transform 0.2s, background 0.3s;
+}
+
+.btn-primary:hover {
+  transform: scale(1.03);
+  background: #d63031;
+}
+
+/* ==========================================
+   3. RƯƠNG KHO BÁU (CSS 3D)
+   ========================================== */
+.chest-wrapper {
+  margin: 15px auto 20px auto;
+  cursor: pointer;
+  display: inline-block;
+  perspective: 1000px;
+}
+
+.treasure-chest {
+  width: 140px;
+  height: 100px;
+  position: relative;
+  transition: transform 0.3s;
+}
+
+.treasure-chest:hover {
+  transform: scale(1.06);
+}
+
+/* Nắp Rương */
+.chest-lid {
+  width: 140px;
+  height: 45px;
+  background: linear-gradient(to bottom, #b33939, #84817a);
+  border: 4px solid #f1c40f;
+  border-radius: 70px 70px 0 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  transform-origin: bottom;
+  transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: inset 0 -4px 0 rgba(0,0,0,0.2);
+}
+
+/* Thân Rương */
+.chest-body {
+  width: 140px;
+  height: 65px;
+  background: linear-gradient(to bottom, #d63031, #b33939);
+  border: 4px solid #f1c40f;
+  border-radius: 0 0 12px 12px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+.lock {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 22px;
+  z-index: 3;
+}
+
+.treasure-chest.open .chest-lid {
+  transform: rotateX(-110deg);
+}
+
+.shaking {
+  animation: chestShake 0.4s infinite;
+}
+
+@keyframes chestShake {
+  0% { transform: rotate(0deg) scale(1.05); }
+  25% { transform: rotate(-8deg) scale(1.05); }
+  75% { transform: rotate(8deg) scale(1.05); }
+  100% { transform: rotate(0deg) scale(1.05); }
+}
+
+/* ==========================================
+   4. POPUP LÁ THƯ (PHỦ KÍN 100% TOÀN MÀN HÌNH)
+   ========================================== */
+.letter-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.65);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  z-index: 99999;
+}
+
+.scroll-letter {
+  background: #fdf6e3;
+  border: 3px double #d3b88c;
+  border-radius: 20px;
+  padding: 25px 20px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+  text-align: center;
+  animation: letterUnroll 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes letterUnroll {
+  0% { transform: scale(0.3); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.letter-stamp {
+  font-size: 40px;
+  margin-bottom: 5px;
+}
+
+.letter-title {
+  font-size: 1.2rem;
+  color: #8b4513;
+  font-weight: 800;
+  border-bottom: 2px dashed #d3b88c;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.letter-salutation {
+  font-size: 0.95rem;
+  color: #2d3436;
+  margin-bottom: 6px;
+}
+
+.letter-text {
+  font-size: 0.9rem;
+  color: #636e72;
+  margin-bottom: 12px;
+}
+
+.class-banner {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #d63031;
+  background: #ffeaa7;
+  border: 2px solid #fdcb6e;
+  border-radius: 12px;
+  padding: 12px;
+  margin: 15px 0;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+}
+
+.bible-quote {
+  font-style: italic;
+  font-size: 0.85rem;
+  color: #2d3436;
+  line-height: 1.5;
+  background: rgba(211, 184, 140, 0.2);
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.bible-quote span {
+  font-weight: bold;
+  color: #8b4513;
+}
+
+.blessing-text {
+  font-size: 0.85rem;
+  color: #27ae60;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.btn-confirm {
+  background: #e17055;
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  border-radius: 25px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(225, 112, 85, 0.4);
+  transition: transform 0.2s;
+}
+
+.btn-confirm:hover {
+  transform: scale(1.05);
+}
+
+.logout-link {
+  background: transparent;
+  border: none;
+  color: #636e72;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-top: 15px;
+}
+
+.hidden { display: none !important; }

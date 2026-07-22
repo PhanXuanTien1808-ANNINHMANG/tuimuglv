@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Đăng Nhập - Túi Mù Giáo Lý</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Nền hình ảnh tùy chỉnh */
+    body {
+      background-image: url('images/Damas1.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    }
+
+    /* Container cho Logo */
+    .logo-box {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .app-logo {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+    }
+
+    .login-box {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .input-group {
+      text-align: left;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: #2d3436;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #dfe6e9;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.3s;
+      box-sizing: border-box;
+    }
+
+    .input-group input:focus {
+      border-color: #ff7675;
+    }
+
+    .error-msg {
+      color: #d63031;
+      font-size: 0.85rem;
+      margin-top: 5px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="main-container">
+    <!-- LOGO TRÊN CHỮ ĐĂNG NHẬP -->
+    <div class="logo-box">
+      <img src="images/logo.png" alt="Logo" class="app-logo">
+    </div>
+
+    <h1 class="title">ĐĂNG NHẬP</h1>
+    <p class="subtitle">Đăng nhập để biết lớp học</p>
+
+    <form class="login-box" id="loginForm" onsubmit="handleLogin(event)">
+      <div class="input-group">
+        <label for="username">Tên đăng nhập</label>
+        <input type="text" id="username" placeholder="Nhập tên đăng nhập..." required>
+      </div>
+
+      <div class="input-group">
+        <label for="password">Mật khẩu</label>
+        <input type="password" id="password" placeholder="Nhập mật khẩu..." required>
+      </div>
+
+      <div class="error-msg" id="errorMsg">Tài khoản hoặc mật khẩu không đúng!</div>
+
+      <button type="submit" class="btn-primary" style="margin-top: 10px;">Đăng Nhập</button>
+    </form>
+  </div>
+
+  <script>
+    async function handleLogin(e) {
+      e.preventDefault();
+      
+      const usernameInput = document.getElementById('username').value.trim();
+      const passwordInput = document.getElementById('password').value.trim();
+      const errorMsg = document.getElementById('errorMsg');
+
+      errorMsg.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: usernameInput,
+            password: passwordInput
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          errorMsg.innerText = data.message || 'Đăng nhập thất bại!';
+          errorMsg.style.display = 'block';
+          return;
+        }
+
+        // 🛠️ ĐÃ SỬA: Đồng bộ họ tên chính xác vào object user
+        const userData = data.user;
+        
+        // Đảm bảo cả hai biến fullname và fullName đều được ghi nhận
+        const fullnameResolved = userData.fullname || userData.fullName || '';
+        
+        userData.fullname = fullnameResolved;
+        userData.fullName = fullnameResolved;
+
+        // 1. Lưu thông tin user đã đồng bộ tên vào localStorage
+        localStorage.setItem('currentUser', JSON.stringify(userData));
+
+        // 2. PHÂN LUỒNG ĐIỀU HƯỚNG DỰ A TRÊN ROLE
+        if (userData.role === 'admin') {
+          // Ban Điều Hành -> Sang trang Quản lý
+          window.location.href = '/admin.html';
+        } else {
+          // Giáo Lý Viên -> Sang trang Mở Túi Mù
+          window.location.href = '/index.html';
+        }
+
+      } catch (err) {
+        errorMsg.innerText = 'Không thể kết nối đến server!';
+        errorMsg.style.display = 'block';
+      }
+    }
+  </script>
+</body>
+</html>
