@@ -3,49 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Rương Báu Giáo Lý</title>
+  <title>Nhiệm Vụ Hệ Thống</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
 
-  <!-- Chặn Admin gõ trực tiếp URL vào index.html -->
+  <!-- Chặn truy cập nếu chưa đăng nhập -->
   <script>
     const user = JSON.parse(localStorage.getItem('currentUser'));
     if (!user) {
       window.location.href = 'login.html';
-    } else if (user.role === 'admin') {
-      alert('Tài khoản Ban Điều Hành không tham gia mở rương!');
-      window.location.href = 'admin.html';
     }
   </script>
 
   <div class="main-container">
-    <!-- Thẻ chào mừng -->
     <div class="welcome-card">
       <h3>Xin chào, <span id="userName">...</span>! 👋</h3>
       <p>Chào mừng bạn đến với chương trình nhận lớp năm học mới!</p>
     </div>
 
-    <h1 class="title">RƯƠNG BÁU GIÁO LÝ</h1>
-    <p class="subtitle" id="instructionText">Chạm vào Rương Báu để mở Lá Thư Sứ Mạng!</p>
+    <h1 class="title">NHIỆM VỤ HỆ THỐNG</h1>
+    <p class="subtitle" id="instructionText">Chạm vào Rương Báu để mở Lá Thư Phân Công!</p>
 
     <!-- RƯƠNG KHO BÁU -->
     <div class="chest-wrapper" id="chestWrapper" onclick="openChest()">
       <div class="treasure-chest" id="treasureChest">
-        <div class="chest-lid">
-          <div class="lid-band"></div>
-        </div>
-        <div class="chest-body">
-          <div class="body-band"></div>
-          <div class="lock">🔑</div>
-        </div>
+        <div class="chest-lid"><div class="lid-band"></div></div>
+        <div class="chest-body"><div class="body-band"></div><div class="lock">🔑</div></div>
       </div>
     </div>
 
-    <!-- NÚT XEM LẠI THƯ (Hiển thị khi đã mở rương) -->
+    <!-- NÚT XEM LẠI THƯ -->
     <div id="reopenContainer" class="hidden" style="margin-top: 15px;">
-      <button class="btn-primary" onclick="showLetter()" style="background: #00b894; box-shadow: 0 4px 12px rgba(0, 184, 148, 0.3);">📜 Xem Lại Thư Sứ Mạng</button>
+      <button class="btn-primary" onclick="showLetter()" style="background: #00b894; box-shadow: 0 4px 12px rgba(0, 184, 148, 0.3);">📜 Xem Lại Phân Công</button>
     </div>
 
     <div>
@@ -53,159 +44,184 @@
     </div>
   </div>
 
-  <!-- POPUP LÁ THƯ (Phủ 100% màn hình) -->
+  <!-- POPUP LÁ THƯ CUỘN NẰM NGANG -->
   <div class="letter-overlay hidden" id="letterOverlay">
-    <div class="scroll-letter" id="scrollLetter">
-      <div class="letter-stamp">📜</div>
-      <h2 class="letter-title">SỨ MẠNG GIÁO LÝ VIÊN</h2>
-      
-      <!-- ĐÃ SỬA: Bỏ khoảng trắng giữa tên và dấu phẩy -->
-      <p class="letter-salutation">Thân gửi <b id="letterRecipient">...</b>,</p>
-      <p class="letter-text">Năm học mới này, Chúa tin tưởng trao ban cho bạn sứ mạng đồng hành cùng các em học sinh lớp:</p>
-      
-      <div class="class-banner" id="assignedClass">...</div>
+    <div class="letter-card">
+      <h2 class="title-gold">PHÂN CÔNG NĂM HỌC MỚI</h2>
+      <h3 class="year-subtitle">2026 - 2027</h3>
 
-      <div class="bible-quote">
-        "Nào người đầy tớ tài giỏi và trung thành! Hãy vào mà hưởng niềm vui của chủ anh!" <br>
-        <span>— Mt 25, 21 —</span>
+      <!-- Tấm cuộn thư nằm ngang -->
+      <div class="scroll-canvas">
+        <div class="scroll-content">
+          <!-- Thông tin bản thân -->
+          <div class="my-info">
+            <span class="role-badge">CHI ĐOÀN</span>
+            <h1 class="class-name" id="letterClass">---</h1>
+            <p class="my-name">
+              <span id="letterHolyName"></span> <b id="letterFullname">---</b>
+            </p>
+            <p class="sub-role" id="letterSubrole">---</p>
+          </div>
+
+          <hr class="divider">
+
+          <!-- Khung hiển thị Anh/Chị cùng lớp -->
+          <div class="teammates-box">
+            <p class="teammates-title">🤝 <b>Anh/Chị cùng lớp:</b></p>
+            <ul id="teammatesList" class="teammates-list">
+              <!-- Danh sách đồng đội sẽ tự động load vào đây -->
+            </ul>
+          </div>
+        </div>
       </div>
 
-      <p class="blessing-text">✨ Chúc bạn một năm học mới đong đầy nhiệt huyết, tràn ngập tình yêu mến và ơn Thánh!</p>
-
-      <button class="btn-confirm" onclick="closeLetter()">ĐÃ NHẬN SỨ MẠNG ✨</button>
+      <button class="btn-close-letter" onclick="closeLetter()">Đóng</button>
     </div>
   </div>
 
 <script>
-  // 1. ĐÃ SỬA: Lấy tên hiển thị chuẩn (Hỗ trợ cả fullname và fullName từ DB)
   const displayName = user.fullname || user.fullName || 'Giáo Lý Viên';
-  
   document.getElementById('userName').innerText = displayName;
-  document.getElementById('letterRecipient').innerText = displayName;
-
-  // Lấy ID chuẩn xác (hỗ trợ cả user.id lẫn user._id từ MongoDB)
   const userId = user.id || user._id;
 
-  // 2. TỰ ĐỘNG ĐỒNG BỘ TRẠNG THÁI TỪ DATABASE KHI LOAD/F5 TRANG
+  // Biến lưu danh sách đồng đội tạm thời
+  let currentTeammates = [];
+
+  // 1. ĐỒNG BỘ TRẠNG THÁI KHI VÀO TRANG
   async function checkCurrentStatus() {
     if (!userId) return;
 
     try {
       const res = await fetch(`/api/chest/status/${userId}`);
       if (res.ok) {
-        const dbUser = await res.json();
+        const data = await res.json();
         
-        // Đăng ký lại thuộc tính cho biến `user` trong bộ nhớ JS
-        user.hasOpenedChest = dbUser.hasOpenedChest;
-        user.assignedClass = dbUser.assignedClass;
-        
-        // Cập nhật lại localStorage
+        Object.assign(user, data.user || data);
+        currentTeammates = data.teammates || []; // 🌟 Đã tự động nhận danh sách đồng đội khi Reload
         localStorage.setItem('currentUser', JSON.stringify(user));
 
-        // Render giao diện tương ứng
-        if (dbUser.hasOpenedChest) {
-          renderOpenedState(dbUser.assignedClass);
+        const targetClass = user.className || user.chidoan;
+        if (user.opened) {
+          renderOpenedState(targetClass);
         } else {
           renderClosedState();
         }
       }
     } catch (err) {
-      console.error('Không thể kiểm tra trạng thái từ máy chủ:', err);
-      if (user.hasOpenedChest) {
-        renderOpenedState(user.assignedClass);
-      }
+      console.error('Lỗi kết nối máy chủ:', err);
+      if (user.opened) renderOpenedState(user.className || user.chidoan);
     }
   }
 
-  async function openChest() {
-    // NẾU ĐÃ MỞ RƯƠNG RỒI -> BẤM VÀO RƯƠNG VẪN MỞ LẠI LÁ THƯ
-    if (user.hasOpenedChest) {
-      showLetter();
+  // 2. MỞ RƯƠNG
+// 2. MỞ RƯƠNG
+async function openChest() {
+  // Nếu đã mở rương rồi thì chỉ mở popup xem lại lá thư
+  if (user.opened) {
+    showLetter();
+    return;
+  }
+
+  const chestWrapper = document.getElementById('chestWrapper');
+  
+  // Bắt đầu hiệu ứng rung rương
+  chestWrapper.classList.add('shaking');
+
+  try {
+    const res = await fetch('/api/chest/open', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: userId })
+    });
+
+    const data = await res.json();
+
+    // Nếu Backend báo lỗi (ví dụ: bị khóa cổng 403 hoặc lỗi khác)
+    if (!res.ok) {
+      chestWrapper.classList.remove('shaking'); // Dừng lắc ngay lập tức
+      alert(data.message || 'Lỗi khi mở rương!');
       return;
     }
 
-    const chestWrapper = document.getElementById('chestWrapper');
-
-    // 1. Rương rung lắc
-    chestWrapper.classList.add('shaking');
-
-    try {
-      const res = await fetch('/api/chest/open', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: userId })
-      });
-
-      const data = await res.json();
-
-      // 2. Mở nắp rương + Hiện lá thư
-      setTimeout(() => {
-        chestWrapper.classList.remove('shaking');
-
-        if (res.ok) {
-          user.hasOpenedChest = true;
-          user.assignedClass = data.assignedClass;
-          localStorage.setItem('currentUser', JSON.stringify(user));
-
-          // Gán trực tiếp tên lớp vào lá thư ngay khi mở thành công
-          document.getElementById('assignedClass').innerText = data.assignedClass;
-
-          renderOpenedState(data.assignedClass);
-          triggerConfetti();
-          showLetter();
-        } else {
-          alert(data.message || 'Lỗi khi mở rương!');
-        }
-      }, 1000);
-
-    } catch (err) {
+    // Nếu thành công -> Chờ hiệu ứng lắc đủ 1s rồi mở thư
+    setTimeout(() => {
       chestWrapper.classList.remove('shaking');
-      alert('Không thể kết nối đến server!');
-    }
-  }
 
-  // Render trạng thái ĐÃ MỞ (Nắp rương lật mở + Hiện tên lớp + Hiện nút xem lại)
+      user.opened = true;
+      Object.assign(user, data.user);
+      currentTeammates = data.teammates || [];
+      localStorage.setItem('currentUser', JSON.stringify(user));
+
+      const targetClass = data.user.className || data.user.chidoan;
+      renderOpenedState(targetClass);
+      triggerConfetti();
+      showLetter();
+    }, 1000);
+
+  } catch (err) {
+    chestWrapper.classList.remove('shaking');
+    console.error('Lỗi kết nối:', err);
+    alert('Không thể kết nối đến máy chủ!');
+  }
+}
+
   function renderOpenedState(className) {
     document.getElementById('treasureChest').classList.add('open');
-    document.getElementById('instructionText').innerText = `Sứ mạng năm học mới: ${className} ✨ (Chạm rương để xem lại)`;
-    document.getElementById('assignedClass').innerText = className;
-    
-    const reopenContainer = document.getElementById('reopenContainer');
-    if (reopenContainer) {
-      reopenContainer.classList.remove('hidden');
-    }
+    document.getElementById('instructionText').innerText = `Chi đoàn: ${className || 'Đã nhận phân công'} ✨ (Chạm rương để xem lại)`;
+    document.getElementById('reopenContainer').classList.remove('hidden');
   }
 
-  // Render trạng thái CHƯA MỞ (Sập nắp rương + Ẩn nút xem lại + Dọn lá thư)
   function renderClosedState() {
     document.getElementById('treasureChest').classList.remove('open');
-    document.getElementById('instructionText').innerText = 'Chạm vào Rương Báu để mở Lá Thư Sứ Mạng!';
-    
-    const reopenContainer = document.getElementById('reopenContainer');
-    if (reopenContainer) {
-      reopenContainer.classList.add('hidden');
-    }
+    document.getElementById('instructionText').innerText = 'Chạm vào Rương Báu để mở Lá Thư Phân Công!';
+    document.getElementById('reopenContainer').classList.add('hidden');
     closeLetter();
   }
 
+  // 3. RENDER NỘI DUNG LÁ THƯ
   function showLetter() {
-    if (user.assignedClass) {
-      document.getElementById('assignedClass').innerText = user.assignedClass;
+    // Gán thông tin cá nhân (ưu tiên className, nếu trống lấy chidoan)
+    const targetClass = user.className || user.chidoan || 'Chưa phân công';
+    document.getElementById('letterClass').innerText = targetClass;
+    document.getElementById('letterHolyName').innerText = user.holyName ? user.holyName + ' ' : '';
+    document.getElementById('letterFullname').innerText = user.fullname || user.fullName || '';
+    document.getElementById('letterSubrole').innerText = user.subrole ? `(${user.subrole})` : '';
+
+    // Render danh sách Anh/Chị cùng lớp
+    const teammatesListEl = document.getElementById('teammatesList');
+    teammatesListEl.innerHTML = '';
+
+    if (currentTeammates && currentTeammates.length > 0) {
+      currentTeammates.forEach(mate => {
+        const li = document.createElement('li');
+        const holy = mate.holyName ? `${mate.holyName} ` : '';
+        const role = mate.subrole ? ` — <i>${mate.subrole}</i>` : '';
+        li.innerHTML = `• ${holy}<b>${mate.fullname}</b>${role}`;
+        teammatesListEl.appendChild(li);
+      });
+    } else {
+      teammatesListEl.innerHTML = '<li><i>Chưa có thành viên khác trong lớp</i></li>';
     }
+
+    // Hiện popup lá thư
     document.getElementById('letterOverlay').classList.remove('hidden');
+
+    // 🌟 Ẩn khung main-container phía sau để triệt tiêu vệt mờ vuông
+    const mainContainer = document.querySelector('.main-container');
+    if (mainContainer) mainContainer.style.opacity = '0';
   }
 
   function closeLetter() {
     document.getElementById('letterOverlay').classList.add('hidden');
+
+    // 🌟 Hiện lại khung main-container bình thường
+    const mainContainer = document.querySelector('.main-container');
+    if (mainContainer) mainContainer.style.opacity = '1';
   }
 
   function triggerConfetti() {
     if (typeof confetti === 'function') {
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 }
-      });
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
     }
   }
 
@@ -214,7 +230,6 @@
     window.location.href = 'login.html';
   }
 
-  // Chạy đồng bộ trạng thái khi load/F5 lại trang
   checkCurrentStatus();
 </script>
 </body>

@@ -6,7 +6,7 @@
 }
 
 /* ==========================================
-   1. HÌNH NỀN FULL MÀN HÌNH & ĐÃ GIẢM ĐỘ MỜ
+   1. HÌNH NỀN FULL MÀN HÌNH
    ========================================== */
 body {
   position: relative;
@@ -15,10 +15,9 @@ body {
   justify-content: center;
   align-items: center;
   padding: 15px;
-  overflow: hidden; /* Dọn dẹp thanh cuộn nếu có */
+  overflow: hidden;
 }
 
-/* Lớp ảnh nền phía sau */
 body::before {
   content: '';
   position: fixed;
@@ -26,85 +25,31 @@ body::before {
   left: 0;
   width: 100vw;
   height: 100vh;
-  
-  /* 🖼️ Đường dẫn tới file ảnh nền của bạn */
   background-image: url('images/Damas1.jpg'); 
-  
-  /* 📐 BẮT BUỘC FULL 100% MÀN HÌNH (Không bị khoảng trống 2 bên): */
   background-size: cover;          
   background-position: center;    
   background-repeat: no-repeat;
-  
-  /* ✨ ĐÃ GIẢM ĐỘ MỜ: Giảm xuống còn 2px cho nét rõ hình (hoặc 3px) */
-  filter: blur(2px);
-  
-  /* Phóng nhẹ 3% để triệt tiêu vệt trắng ở mép màn hình khi làm mờ */
-  transform: scale(1.03);         
-  z-index: -1;                     
+  filter: blur(1px) brightness(1.15);
+  transform: scale(1.02);         
+  z-index: -1;                  
 }
 
 /* ==========================================
-   2. KHUNG CHÍNH (GLASSMORPHISM GIỮ NGUYÊN NÉT)
+   2. KHUNG CHÍNH (GLASSMORPHISM)
    ========================================== */
 .main-container {
   width: 100%;
   max-width: 420px;
   text-align: center;
-  
-  /* Nền trắng mờ nhẹ 85% giúp nổi bật form trên nền ảnh */
-  background: rgba(255, 255, 255, 0.85) !important;
-  
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  
-  padding: 25px 20px;
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
-}
-
-/* ==========================================
-   2. KHUNG CHÍNH (GLASSMORPHISM MỜ KÍNH)
-   ========================================== */
-.main-container {
-  width: 100%;
-  max-width: 420px;
-  text-align: center;
-  
-  /* Nền trắng mờ 80% */
-  background: rgba(255, 255, 255, 0.82) !important;
-  
-  /* Lớp mờ kính bọc quanh form */
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  
-  padding: 25px 20px;
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-}
-/* ==========================================
-   2. KHUNG CHÍNH (HIỆU ỨNG KÍNH MỜ GLASSMORPHISM)
-   ========================================== */
-.main-container {
-  width: 100%;
-  max-width: 420px;
-  text-align: center;
-  
-  /* Nền trắng trong suốt 75% */
   background: rgba(255, 255, 255, 0.78) !important;
-  
-  /* ✨ LÀM MỜ HÌNH NỀN PHÍA SAU (BACKDROP BLUR) */
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
-  
   padding: 25px 20px;
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.5);
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.18);
 }
 
-/* Logo ở trang Đăng nhập */
 .logo-box {
   text-align: center;
   margin-bottom: 10px;
@@ -170,8 +115,20 @@ body::before {
   background: #d63031;
 }
 
+.logout-link {
+  background: transparent;
+  border: none;
+  color: #636e72;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-top: 15px;
+}
+
+.hidden { display: none !important; }
+
 /* ==========================================
-   3. RƯƠNG KHO BÁU (CSS 3D)
+   3. RƯƠNG KHO BÁU (3D)
    ========================================== */
 .chest-wrapper {
   margin: 15px auto 20px auto;
@@ -191,7 +148,6 @@ body::before {
   transform: scale(1.06);
 }
 
-/* Nắp Rương */
 .chest-lid {
   width: 140px;
   height: 45px;
@@ -207,7 +163,6 @@ body::before {
   box-shadow: inset 0 -4px 0 rgba(0,0,0,0.2);
 }
 
-/* Thân Rương */
 .chest-body {
   width: 140px;
   height: 65px;
@@ -246,7 +201,7 @@ body::before {
 }
 
 /* ==========================================
-   4. POPUP LÁ THƯ (PHỦ KÍN 100% TOÀN MÀN HÌNH)
+   4. POPUP LÁ THƯ CUỘN NẰM NGANG (TONG MÀU SÁNG & ẤM ÁP)
    ========================================== */
 .letter-overlay {
   position: fixed;
@@ -254,119 +209,162 @@ body::before {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.65);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+/* 🌟 ĐỔI SANG MÀU TRẮNG TRONG SUỐT NỀN SÁNG (15%) */
+  background: rgba(255, 255, 255, 0.15); 
+  
+  /* Giảm mờ từ 8px xuống 4px giúp ảnh nền đằng sau vừa sáng vừa nét */
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  padding: 15px;
   z-index: 99999;
 }
 
-.scroll-letter {
-  background: #fdf6e3;
-  border: 3px double #d3b88c;
-  border-radius: 20px;
-  padding: 25px 20px;
-  max-width: 400px;
+/* Thẻ bao ngoài: Đổi sang màu Đỏ Đô / Đỏ Giáng Sinh tươi tắn & Ấm áp */
+.letter-card {
+  background: linear-gradient(145deg, #d63031, #b33939); /* Tone Đỏ trang trọng, ấm áp */
+  border: 2px solid #f1c40f; /* Viền vàng kim nổi bật */
+  border-radius: 24px;
+  padding: 24px 20px;
   width: 100%;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+  max-width: 380px;
   text-align: center;
-  animation: letterUnroll 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  color: #ffffff;
+  /* Bóng phát sáng vàng kim quanh thiệp */
+  box-shadow: 0 0 30px rgba(241, 196, 15, 0.4), 0 15px 35px rgba(0, 0, 0, 0.3);
+  animation: popGlow 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
-@keyframes letterUnroll {
-  0% { transform: scale(0.3); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
+@keyframes popGlow {
+  0% { 
+    transform: scale(0.5); 
+    opacity: 0; 
+  }
+  100% { 
+    transform: scale(1); 
+    opacity: 1; 
+  }
 }
 
-.letter-stamp {
-  font-size: 40px;
-  margin-bottom: 5px;
-}
-
-.letter-title {
+/* Tiêu đề màu vàng tươi nổi bật trên nền đỏ */
+.title-gold {
+  color: #ffeaa7;
   font-size: 1.2rem;
-  color: #8b4513;
   font-weight: 800;
-  border-bottom: 2px dashed #d3b88c;
-  padding-bottom: 10px;
-  margin-bottom: 15px;
+  letter-spacing: 0.8px;
+  margin: 0;
+  text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.letter-salutation {
-  font-size: 0.95rem;
-  color: #2d3436;
-  margin-bottom: 6px;
+.year-subtitle {
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 4px 0 16px 0;
+  letter-spacing: 1px;
 }
 
-.letter-text {
-  font-size: 0.9rem;
-  color: #636e72;
-  margin-bottom: 12px;
-}
-
-.class-banner {
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: #d63031;
-  background: #ffeaa7;
-  border: 2px solid #fdcb6e;
+/* Cuộn thư giấy trắng sáng bên trong */
+.scroll-canvas {
+  background: #ffffff;
+  border-top: 5px solid #fdcb6e;
+  border-bottom: 5px solid #fdcb6e;
   border-radius: 12px;
-  padding: 12px;
-  margin: 15px 0;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+  padding: 16px 14px;
+  color: #2d3748;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 18px;
 }
 
-.bible-quote {
-  font-style: italic;
-  font-size: 0.85rem;
+.role-badge {
+  font-size: 0.72rem;
+  color: #636e72;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+/* Tên lớp màu đỏ đậm nổi bật */
+.class-name {
+  color: #d63031; 
+  font-size: 1.9rem;
+  margin: 4px 0;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.my-name {
+  font-size: 1rem;
   color: #2d3436;
-  line-height: 1.5;
-  background: rgba(211, 184, 140, 0.2);
-  padding: 10px;
-  border-radius: 8px;
-  margin-bottom: 12px;
+  margin: 6px 0 2px 0;
 }
 
-.bible-quote span {
-  font-weight: bold;
-  color: #8b4513;
-}
-
-.blessing-text {
-  font-size: 0.85rem;
-  color: #27ae60;
+.sub-role {
+  font-size: 0.88rem;
+  color: #636e72;
   font-weight: 600;
-  margin-bottom: 20px;
+  margin: 0;
 }
 
-.btn-confirm {
-  background: #e17055;
-  color: white;
+.divider {
+  border: 0;
+  border-top: 1px dashed #dfe6e9;
+  margin: 12px 0;
+}
+
+/* Khung hiển thị Anh/Chị cùng lớp */
+.teammates-box {
+  text-align: left;
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 10px 12px;
+  border: 1px solid #e9ecef;
+}
+
+.teammates-title {
+  font-size: 0.83rem;
+  color: #2d3436;
+  margin: 0 0 6px 0;
+}
+
+.teammates-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+  font-size: 0.83rem;
+  color: #636e72;
+}
+
+.teammates-list li {
+  margin-bottom: 4px;
+  line-height: 1.35;
+}
+
+.teammates-list i {
+  color: #b2bec3;
+  font-size: 0.78rem;
+}
+
+/* Nút Đóng màu trắng tươi sáng, dễ bấm */
+.btn-close-letter {
+  background: #ffffff;
   border: none;
-  padding: 12px 25px;
-  font-size: 0.9rem;
-  font-weight: bold;
-  border-radius: 25px;
+  color: #d63031;
+  padding: 9px 36px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(225, 112, 85, 0.4);
-  transition: transform 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.btn-confirm:hover {
+.btn-close-letter:hover {
+  background: #ffeaa7;
+  color: #d63031;
   transform: scale(1.05);
 }
-
-.logout-link {
-  background: transparent;
-  border: none;
-  color: #636e72;
-  font-size: 0.85rem;
-  text-decoration: underline;
-  cursor: pointer;
-  margin-top: 15px;
-}
-
-.hidden { display: none !important; }

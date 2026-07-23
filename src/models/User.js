@@ -1,6 +1,13 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
+  // Tên Thánh (ví dụ: Giuse, Maria)
+  holyName: {
+    type: String,
+    default: '',
+    trim: true
+  },
+
   // Tên đăng nhập (ví dụ: xuantien)
   username: {
     type: String,
@@ -18,13 +25,29 @@ const userSchema = new mongoose.Schema({
   // Họ và tên đầy đủ hiển thị trên lá thư (ví dụ: Phan Xuân Tiến)
   fullname: {
     type: String,
-    required: true
+    required: true,
+    trim: true
+  },
+
+  // 🌟 NGÀY THÁNG NĂM SINH (Dùng để hiển thị & tạo mật khẩu tự động)
+  dateOfBirth: {
+    type: String,
+    default: '',
+    trim: true
   },
 
   // Tên lớp phân công đợt này (ví dụ: Nghĩa 1A)
   className: {
     type: String,
-    default: ''
+    default: '',
+    trim: true
+  },
+
+  // Chi đoàn tự động tra từ ClassMapping hoặc nhập tay
+  chidoan: {
+    type: String,
+    default: '',
+    trim: true
   },
 
   // Vai trò: 'admin' hoặc 'glv'

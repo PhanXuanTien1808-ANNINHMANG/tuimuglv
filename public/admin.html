@@ -3,332 +3,691 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trang Quản Lý Admin - Túi Mù Giáo Lý</title>
+  <title>Trang Quản Lý Admin</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
-    /* Mở rộng khung container riêng cho Admin */
+    body { background: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; }
+    
     .admin-container {
-      max-width: 850px !important;
-      width: 95%;
+      display: flex;
+      gap: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+      align-items: flex-start;
     }
 
-    /* Thanh công cụ Admin */
-    .admin-actions {
+    /* CỘT BÊN TRÁI: BẢNG DỮ LIỆU */
+    .left-panel {
+      flex: 3;
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .panel-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 15px;
-      flex-wrap: wrap;
+      margin-bottom: 20px;
     }
 
-    .btn-action {
-      padding: 10px 18px;
-      border: none;
-      border-radius: 20px;
-      font-weight: bold;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: transform 0.2s, background-color 0.2s;
-    }
-    .btn-action:hover { transform: scale(1.03); }
+    .panel-header h2 { margin: 0; color: #2d3436; font-size: 1.5rem; }
 
-    .btn-add { background: #00b894; color: white; }
-    .btn-reset-selected { background: #d63031; color: white; }
-    .btn-reset-all { background: #6c5ce7; color: white; }
-
-    /* Bảng danh sách */
-    .table-responsive {
-      max-height: 400px;
-      overflow-y: auto;
-      border-radius: 12px;
-      border: 1px solid rgba(0,0,0,0.1);
+    /* 🌟 KHUNG CHỨA BẢNG TẠO THANH TRƯỢT TỰ ĐỘNG LĂN LÊN/XUỐNG */
+    .table-scroll-container {
+      max-height: 600px; /* Giới hạn chiều cao bảng */
+      overflow-y: auto;  /* Tạo thanh trượt đứng khi dài */
+      border: 1px solid #edf2f7;
+      border-radius: 8px;
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      text-align: left;
-    }
-
-    th, td {
-      padding: 12px 15px;
-      font-size: 0.9rem;
-      border-bottom: 1px solid #dfe6e9;
-      vertical-align: middle;
-    }
-
-    th {
-      background: #0984e3;
-      color: white;
-      position: sticky;
-      top: 0;
+    /* BẢNG DỮ LIỆU INLINE EDITING */
+    .admin-table { width: 100%; border-collapse: collapse; }
+    .admin-table th, .admin-table td { padding: 10px 8px; border-bottom: 1px solid #edf2f7; text-align: left; font-size: 0.9rem; vertical-align: middle; }
+    
+    /* Sticky header để giữ tiêu đề khi lăn chuột */
+    .admin-table th { 
+      background: #0984e3; 
+      color: white; 
+      font-weight: 600; 
+      white-space: nowrap; 
+      position: sticky; 
+      top: 0; 
       z-index: 10;
     }
-
-    .badge {
-      padding: 5px 10px;
-      border-radius: 12px;
-      font-size: 0.78rem;
-      font-weight: bold;
-      display: inline-block;
-    }
-    .badge-success { background: #55efc4; color: #00b894; }
-    .badge-warning { background: #ffeaa7; color: #d63031; }
-
-    /* Modal Form (Thêm / Sửa GLV) */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0,0,0,0.5);
-      backdrop-filter: blur(5px);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-    }
-
-    .modal-box {
-      background: white;
-      padding: 25px;
-      border-radius: 20px;
-      width: 90%;
-      max-width: 400px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      text-align: left;
-    }
-
-    .modal-box h3 { margin-bottom: 15px; color: #2d3436; }
-    .modal-box label { font-size: 0.85rem; font-weight: bold; color: #636e72; }
-    .modal-box input {
+    
+    .table-input {
       width: 100%;
-      padding: 10px;
-      margin: 5px 0 15px 0;
-      border: 1.5px solid #dfe6e9;
-      border-radius: 10px;
+      padding: 6px 8px;
+      border: 1px solid #0984e3;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 0.9rem;
+      outline: none;
+      background: #f8f9fa;
+    }
+    .table-input:focus { background: #fff; border-color: #00b894; }
+
+    .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; display: inline-block; white-space: nowrap; }
+    .badge-success { background: #e6fffa; color: #00b894; border: 1px solid #b2f5ea; }
+    .badge-pending { background: #fff5f5; color: #e53e3e; border: 1px solid #fed7d7; }
+
+    /* NÚT THAO TÁC BẢNG */
+    .btn-tbl {
+      padding: 5px 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-right: 4px;
+      transition: opacity 0.2s;
+    }
+    .btn-tbl:hover { opacity: 0.8; }
+    .btn-tbl-edit { background: #fdcb6e; color: #2d3436; }
+    .btn-tbl-save { background: #00b894; color: white; }
+    .btn-tbl-cancel { background: #b2bec3; color: white; }
+    .btn-tbl-delete { background: #ff7675; color: white; }
+
+    /* CỘT BÊN PHẢI: KHUNG CHỨC NĂNG DỌC */
+    .right-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-width: 300px;
+      position: sticky;
+      top: 20px;
     }
 
-    .btn-group { display: flex; gap: 10px; justify-content: flex-end; }
+    .card-action {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .card-action h4 { margin: 0 0 12px 0; color: #2d3436; font-size: 1.1rem; border-bottom: 2px solid #f1f2f6; padding-bottom: 8px; }
+
+    .btn-action {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 10px;
+      transition: transform 0.1s, opacity 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-action:active { transform: scale(0.98); }
+    
+    .btn-add { background: #00b894; color: white; }
+    .btn-edit-all { background: #e17055; color: white; }
+    .btn-save-all { background: #00b894; color: white; }
+    .btn-cancel-all { background: #636e72; color: white; }
+    .btn-excel { background: #0984e3; color: white; }
+    .btn-delete-selected { background: #d63031; color: white; } /* 🌟 NÚT XÓA MỤC ĐÃ CHỌN */
+    .btn-reset-selected { background: #e17055; color: white; }
+    .btn-reset-all { background: #d63031; color: white; }
+    .btn-lock { background: #6c5ce7; color: white; }
+
+    .status-box {
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .status-locked { background: #ffe3e3; color: #c0392b; }
+    .status-unlocked { background: #d4edda; color: #155724; }
+
+    /* MODAL THÊM GLV */
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+    .modal-content { background: white; padding: 24px; border-radius: 16px; width: 420px; max-width: 90%; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-weight: bold; margin-bottom: 4px; font-size: 0.9rem; }
+    .form-group input { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
   </style>
 </head>
 <body>
 
-  <div class="main-container admin-container">
-    <h1 class="title">TRANG QUẢN LÝ (ADMIN)</h1>
-    <p class="subtitle">Thêm/Sửa lớp đợt này và quản lý trạng thái mở rương</p>
-
-    <div class="admin-actions">
-      <div>
-        <button class="btn-action btn-add" onclick="openModal()">➕ Thêm GLV Mới</button>
+  <div class="admin-container">
+    
+    <!-- 1. BẢNG DỮ LIỆU BÊN TRÁI -->
+    <div class="left-panel">
+      <div class="panel-header">
+        <h2>TRANG QUẢN LÝ (ADMIN)</h2>
+        <a href="login.html" onclick="logoutAdmin()" style="color: #636e72; text-decoration: none; font-weight: bold;">Đăng xuất</a>
       </div>
-      <div style="display: flex; gap: 8px;">
-        <button class="btn-action btn-reset-selected" onclick="resetSelectedGLV()">🔄 Reset Mục Đã Chọn</button>
-        <button class="btn-action btn-reset-all" onclick="resetAllGLV()">⚠️ Reset Tất Cả</button>
-      </div>
-    </div>
 
-    <div class="table-responsive">
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 40px; text-align: center;">
-              <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)">
-            </th>
-            <th>Họ và Tên</th>
-            <th>Lớp Đợt Này</th>
-            <th>Trạng Thái</th>
-            <th style="text-align: center;">Hành Động</th>
-          </tr>
-        </thead>
-        <tbody id="userTableBody">
+      <!-- 🌟 CONTAINER CÓ THANH TRƯỢT ĐỨNG -->
+      <div class="table-scroll-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th style="width: 30px; text-align: center;">
+                <input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)">
+              </th>
+              <th style="width: 35px; text-align: center;">STT</th>
+              <th>Tên Thánh</th>
+              <th>Họ và Tên</th>
+              <th>Năm Sinh</th>
+              <th>Lớp</th>
+              <th>Chi Đoàn</th>
+              <th style="text-align: center;">Trạng Thái</th>
+              <th style="text-align: center; width: 110px;">Thao Tác</th>
+            </tr>
+          </thead>
+          <tbody id="userTableBody">
+            <!-- JS sẽ đổ dữ liệu vào đây -->
           </tbody>
-      </table>
+        </table>
+      </div>
     </div>
 
-    <button class="logout-link" onclick="handleLogout()">Đăng xuất</button>
+    <!-- 2. KHUNG CHỨC NĂNG DỌC BÊN PHẢI -->
+    <div class="right-panel">
+
+      <!-- KHÓA / MỞ KHÓA RƯƠNG -->
+      <div class="card-action">
+        <h4>🔒 Khóa / Mở Rương</h4>
+        <div id="lockStatusBox" class="status-box status-locked">Đang tải trạng thái...</div>
+        <button class="btn-action btn-lock" id="btnToggleLock" onclick="toggleSystemLock()">
+          🔑 Chuyển Trạng Thái
+        </button>
+      </div>
+
+      <!-- CHỨC NĂNG THÊM, SỬA & XÓA -->
+      <div class="card-action">
+        <h4>➕ Thêm & Chỉnh Sửa</h4>
+        
+        <div id="bulkEditControls">
+          <button class="btn-action btn-edit-all" onclick="enableBulkEdit()">
+            ✏️ Sửa Tất Cả Cùng Lúc
+          </button>
+        </div>
+
+        <button class="btn-action btn-add" onclick="openAddModal()">
+          👤 Thêm Thủ Công
+        </button>
+        <button class="btn-action btn-excel" onclick="document.getElementById('excelInput').click()">
+          📊 Tải File Excel
+        </button>
+        <!-- 🌟 NÚT XÓA MỤC ĐÃ CHỌN -->
+        <button class="btn-action btn-delete-selected" onclick="deleteSelected()">
+          🗑️ Xóa Mục Đã Chọn
+        </button>
+        <input type="file" id="excelInput" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelUpload(this)">
+      </div>
+
+      <!-- RESET RƯƠNG BÁU -->
+      <div class="card-action">
+        <h4>🔄 Reset Rương Báu</h4>
+        <button class="btn-action btn-reset-selected" onclick="resetSelected()">
+          🧹 Reset Mục Đã Chọn
+        </button>
+        <button class="btn-action btn-reset-all" onclick="resetAll()">
+          ⚠️ Reset Tất Cả
+        </button>
+      </div>
+
+    </div>
   </div>
 
-  <div id="userModal" class="modal-overlay hidden">
-    <div class="modal-box">
-      <h3 id="modalTitle">Thêm Giáo Lý Viên</h3>
-      <form id="userForm" onsubmit="saveUser(event)">
-        <input type="hidden" id="editUserId">
+  <!-- MODAL THÊM THỦ CÔNG -->
+  <div class="modal" id="addModal">
+    <div class="modal-content">
+      <h3>Thêm Giáo Lý Viên Mới</h3>
+      <div class="form-group">
+        <label>Tên Thánh:</label>
+        <input type="text" id="addHolyName" placeholder="VD: Giuse">
+      </div>
+      <div class="form-group">
+        <label>Họ và Tên (*):</label>
+        <input type="text" id="addFullname" placeholder="VD: Nguyễn Văn A" required>
+      </div>
+      <div class="form-group">
+        <label>Ngày / Năm Sinh (Mật khẩu tự động):</label>
+        <input type="text" id="addDob" placeholder="VD: 01.03.1995">
+      </div>
+      <div class="form-group">
+        <label>Lớp / Phân Công:</label>
+        <input type="text" id="addClassName" placeholder="VD: Nghĩa 2A">
+      </div>
+      <div class="form-group">
+        <label>Chi Đoàn (Tùy chọn):</label>
+        <input type="text" id="addChidoan" placeholder="Để trống nếu muốn tự động xếp theo Lớp">
+      </div>
 
-        <label for="inputFullname">Họ và Tên GLV</label>
-        <input type="text" id="inputFullname" placeholder="Ví dụ: Phan Xuân Tiến" required>
-
-        <label for="inputUsername">Tên đăng nhập (Username)</label>
-        <input type="text" id="inputUsername" placeholder="Ví dụ: phanxuantien" required>
-
-        <label for="inputPassword">Mật khẩu</label>
-        <input type="password" id="inputPassword" placeholder="Mật khẩu..." required>
-
-        <label for="inputClass">Lớp Phân Công (Đợt Này)</label>
-        <input type="text" id="inputClass" placeholder="Ví dụ: Nghĩa 1A" required>
-
-        <div class="btn-group">
-          <button type="button" class="btn-action" style="background:#b2bec3; color:white;" onclick="closeModal()">Hủy</button>
-          <button type="submit" class="btn-action btn-add">Lưu Lại</button>
-        </div>
-      </form>
+      <div class="modal-actions">
+        <button onclick="closeAddModal()" style="padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;">Hủy</button>
+        <button onclick="saveNewUser()" style="padding: 8px 16px; background: #00b894; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Thêm Mới</button>
+      </div>
     </div>
   </div>
 
   <script>
-    let usersData = [];
+    (function checkAdminAuth() {
+      const user = JSON.parse(localStorage.getItem('currentUser'));
+      if (!user) {
+        window.location.href = 'login.html';
+      } else if (user.role !== 'admin') {
+        alert('Tài khoản của bạn không có quyền truy cập trang Admin!');
+        window.location.href = 'index.html';
+      }
+    })();
 
-    // Tải danh sách GLV
-    async function loadUsers() {
+    let isLocked = true;
+    let allUsers = [];
+    let isBulkEditing = false;
+
+    async function initAdmin() {
+      await fetchUsers();
+      await fetchLockStatus();
+    }
+
+    async function fetchUsers() {
       try {
         const res = await fetch('/api/admin/users');
-        usersData = await res.json();
-        renderTable(usersData);
+        if (res.ok) {
+          allUsers = await res.json();
+          renderTable(allUsers);
+        }
       } catch (err) {
-        alert('Lỗi tải danh sách!');
+        console.error('Lỗi tải danh sách GLV:', err);
       }
     }
 
-    // Hiển thị bảng (Đã loại bỏ cột Tên ĐN)
     function renderTable(users) {
       const tbody = document.getElementById('userTableBody');
       tbody.innerHTML = '';
 
-      users.filter(u => u.role !== 'admin').forEach(user => {
-        const isOpened = user.opened;
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td style="text-align: center;">
-            <input type="checkbox" class="user-checkbox" value="${user._id || user.id}">
-          </td>
-          <td><strong>${user.fullname}</strong></td>
-          <td><span style="color:#d63031; font-weight:bold;">${user.className || 'Chưa gán'}</span></td>
-          <td>
-            <span class="badge ${isOpened ? 'badge-success' : 'badge-warning'}">
-              ${isOpened ? 'Đã Mở' : 'Chưa Mở'}
-            </span>
-          </td>
-          <td style="text-align: center;">
-            <button class="btn-action" style="background:#ffeaa7; color:#d63031; padding: 5px 10px;" onclick="openModalEdit('${user._id || user.id}')">✏️ Sửa Lớp/Tên</button>
-          </td>
-        `;
-        tbody.appendChild(row);
-      });
-    }
-
-    // Chọn tất cả
-    function toggleSelectAll(master) {
-      const checkboxes = document.querySelectorAll('.user-checkbox');
-      checkboxes.forEach(cb => cb.checked = master.checked);
-    }
-
-    // Reset các mục đã chọn
-    async function resetSelectedGLV() {
-      const selectedIds = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb => cb.value);
-      
-      if (selectedIds.length === 0) {
-        alert('Vui lòng tích chọn ít nhất 1 Giáo Lý Viên để reset!');
+      if (!users || users.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 20px;">Chưa có dữ liệu Giáo Lý Viên</td></tr>`;
         return;
       }
 
-      if (!confirm(`Bạn có chắc muốn reset trạng thái của ${selectedIds.length} người đã chọn?`)) return;
+      users.forEach((u, index) => {
+        const tr = document.createElement('tr');
+        tr.id = `row-${u._id}`;
+        
+        const statusBadge = u.opened
+          ? `<span class="badge badge-success">Đã Mở</span>`
+          : `<span class="badge badge-pending">Chưa Mở</span>`;
 
+        if (isBulkEditing) {
+          tr.innerHTML = `
+            <td style="text-align: center;"><input type="checkbox" disabled></td>
+            <td style="text-align: center; font-weight: bold; color: #636e72;">${index + 1}</td>
+            <td><input type="text" class="table-input bulk-holy" data-id="${u._id}" value="${u.holyName || ''}"></td>
+            <td><input type="text" class="table-input bulk-fullname" data-id="${u._id}" value="${u.fullname || u.fullName || ''}"></td>
+            <td><input type="text" class="table-input bulk-dob" data-id="${u._id}" value="${u.dateOfBirth || u.dob || ''}"></td>
+            <td><input type="text" class="table-input bulk-class" data-id="${u._id}" value="${u.className || ''}"></td>
+            <td><input type="text" class="table-input bulk-chidoan" data-id="${u._id}" value="${u.chidoan || ''}" placeholder="Tự xếp"></td>
+            <td style="text-align: center;">${statusBadge}</td>
+            <td style="text-align: center;">
+              <button class="btn-tbl btn-tbl-delete" onclick="deleteUser('${u._id}')">🗑️</button>
+            </td>
+          `;
+        } else {
+          tr.innerHTML = `
+            <td style="text-align: center;">
+              <input type="checkbox" class="user-cb" value="${u._id}">
+            </td>
+            <td style="text-align: center; font-weight: bold; color: #636e72;">${index + 1}</td>
+            <td>${u.holyName || '—'}</td>
+            <td><b>${u.fullname || u.fullName || ''}</b></td>
+            <td>${u.dateOfBirth || u.dob || '—'}</td>
+            <td>${u.className || '—'}</td>
+            <td>${u.chidoan || u.subrole || '—'}</td>
+            <td style="text-align: center;">${statusBadge}</td>
+            <td style="text-align: center; white-space: nowrap;">
+              <button class="btn-tbl btn-tbl-edit" onclick="enableSingleRowEdit('${u._id}')">✏️ Sửa</button>
+              <button class="btn-tbl btn-tbl-delete" onclick="deleteUser('${u._id}')">🗑️</button>
+            </td>
+          `;
+        }
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 🌟 CHỨC NĂNG XÓA MỤC ĐÃ CHỌN
+    async function deleteSelected() {
+      const selectedIds = Array.from(document.querySelectorAll('.user-cb:checked')).map(cb => cb.value);
+      if (selectedIds.length === 0) return alert('Vui lòng chọn ít nhất 1 Giáo Lý Viên để xóa!');
+
+      if (confirm(`Bạn có chắc chắn muốn XÓA VĨNH VIỄN ${selectedIds.length} Giáo Lý Viên đã chọn?`)) {
+        const res = await fetch('/api/admin/delete-selected', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userIds: selectedIds })
+        });
+
+        if (res.ok) {
+          const result = await res.json();
+          alert(result.message || 'Đã xóa thành công!');
+          fetchUsers();
+        } else {
+          alert('Lỗi khi xóa!');
+        }
+      }
+    }
+
+    function enableBulkEdit() {
+      isBulkEditing = true;
+      renderTable(allUsers);
+      document.getElementById('bulkEditControls').innerHTML = `
+        <button class="btn-action btn-save-all" onclick="saveBulkEdit()">
+          💾 Cập Nhật Tất Cả (Lưu 1 Lần)
+        </button>
+        <button class="btn-action btn-cancel-all" onclick="cancelBulkEdit()">
+          ❌ Hủy Sửa
+        </button>
+      `;
+    }
+
+    function cancelBulkEdit() {
+      isBulkEditing = false;
+      renderTable(allUsers);
+      document.getElementById('bulkEditControls').innerHTML = `
+        <button class="btn-action btn-edit-all" onclick="enableBulkEdit()">
+          ✏️ Sửa Tất Cả Cùng Lúc
+        </button>
+      `;
+    }
+
+    async function saveBulkEdit() {
+      const updatedUsersList = [];
+      let hasError = false;
+
+      allUsers.forEach(u => {
+        const id = u._id;
+        const holyInput = document.querySelector(`.bulk-holy[data-id="${id}"]`);
+        const nameInput = document.querySelector(`.bulk-fullname[data-id="${id}"]`);
+        const dobInput = document.querySelector(`.bulk-dob[data-id="${id}"]`);
+        const classInput = document.querySelector(`.bulk-class[data-id="${id}"]`);
+        const chidoanInput = document.querySelector(`.bulk-chidoan[data-id="${id}"]`);
+
+        if (nameInput) {
+          const fullname = nameInput.value.trim();
+          if (!fullname) hasError = true;
+
+          updatedUsersList.push({
+            _id: id,
+            holyName: holyInput ? holyInput.value.trim() : '',
+            fullname: fullname,
+            dateOfBirth: dobInput ? dobInput.value.trim() : '',
+            className: classInput ? classInput.value.trim() : '',
+            chidoan: chidoanInput ? chidoanInput.value.trim() : ''
+          });
+        }
+      });
+
+      if (hasError) return alert('Họ và Tên không được để trống!');
+
+      const res = await fetch('/api/admin/users-bulk', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ users: updatedUsersList })
+      });
+
+      if (res.ok) {
+        alert('Đã cập nhật toàn bộ bảng thành công!');
+        isBulkEditing = false;
+        cancelBulkEdit();
+        fetchUsers();
+      } else {
+        alert('Lỗi cập nhật hàng loạt!');
+      }
+    }
+
+    function enableSingleRowEdit(id) {
+      const u = allUsers.find(item => item._id === id);
+      if (!u) return;
+
+      const tr = document.getElementById(`row-${id}`);
+      tr.innerHTML = `
+        <td style="text-align: center;"><input type="checkbox" disabled></td>
+        <td style="text-align: center; font-weight: bold;">—</td>
+        <td><input type="text" class="table-input" id="edit-holy-${id}" value="${u.holyName || ''}"></td>
+        <td><input type="text" class="table-input" id="edit-fullname-${id}" value="${u.fullname || u.fullName || ''}"></td>
+        <td><input type="text" class="table-input" id="edit-dob-${id}" value="${u.dateOfBirth || u.dob || ''}"></td>
+        <td><input type="text" class="table-input" id="edit-class-${id}" value="${u.className || ''}"></td>
+        <td><input type="text" class="table-input" id="edit-chidoan-${id}" value="${u.chidoan || ''}" placeholder="Tự xếp"></td>
+        <td style="text-align: center;">—</td>
+        <td style="text-align: center; white-space: nowrap;">
+          <button class="btn-tbl btn-tbl-save" onclick="saveSingleRowEdit('${id}')">💾 Lưu</button>
+          <button class="btn-tbl btn-tbl-cancel" onclick="renderTable(allUsers)">Hủy</button>
+        </td>
+      `;
+    }
+
+    async function saveSingleRowEdit(id) {
+      const holyName = document.getElementById(`edit-holy-${id}`).value.trim();
+      const fullname = document.getElementById(`edit-fullname-${id}`).value.trim();
+      const dateOfBirth = document.getElementById(`edit-dob-${id}`).value.trim();
+      const className = document.getElementById(`edit-class-${id}`).value.trim();
+      const chidoan = document.getElementById(`edit-chidoan-${id}`).value.trim();
+
+      if (!fullname) return alert('Họ và Tên không được để trống!');
+
+      const res = await fetch(`/api/admin/users/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ holyName, fullname, dateOfBirth, className, chidoan })
+      });
+
+      if (res.ok) {
+        fetchUsers();
+      } else {
+        alert('Lỗi cập nhật!');
+      }
+    }
+
+    async function deleteUser(id) {
+      if (!confirm('Bạn có chắc chắn muốn XÓA Giáo Lý Viên này?')) return;
+
+      const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchUsers();
+      } else {
+        alert('Lỗi khi xóa!');
+      }
+    }
+
+    function openAddModal() {
+      document.getElementById('addHolyName').value = '';
+      document.getElementById('addFullname').value = '';
+      document.getElementById('addDob').value = '';
+      document.getElementById('addClassName').value = '';
+      document.getElementById('addChidoan').value = '';
+      document.getElementById('addModal').style.display = 'flex';
+    }
+
+    function closeAddModal() {
+      document.getElementById('addModal').style.display = 'none';
+    }
+
+    async function saveNewUser() {
+      const fullname = document.getElementById('addFullname').value.trim();
+      if (!fullname) return alert('Vui lòng nhập Họ và Tên!');
+
+      const payload = {
+        holyName: document.getElementById('addHolyName').value.trim(),
+        fullname: fullname,
+        dateOfBirth: document.getElementById('addDob').value.trim(),
+        className: document.getElementById('addClassName').value.trim(),
+        chidoan: document.getElementById('addChidoan').value.trim()
+      };
+
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        closeAddModal();
+        fetchUsers();
+      } else {
+        alert('Thêm thất bại!');
+      }
+    }
+
+    async function fetchLockStatus() {
       try {
+        const res = await fetch('/api/chest/system-status');
+        if (res.ok) {
+          const data = await res.json();
+          isLocked = data.isLocked;
+          updateLockUI();
+        }
+      } catch (err) {
+        document.getElementById('lockStatusBox').innerText = 'Lỗi tải trạng thái!';
+      }
+    }
+
+    async function toggleSystemLock() {
+      try {
+        const res = await fetch('/api/chest/toggle-lock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isLocked: !isLocked })
+        });
+        const data = await res.json();
+        isLocked = data.isLocked;
+        updateLockUI();
+      } catch (err) {
+        alert('Lỗi cập nhật trạng thái khóa!');
+      }
+    }
+
+    function updateLockUI() {
+      const box = document.getElementById('lockStatusBox');
+      const btn = document.getElementById('btnToggleLock');
+      if (isLocked) {
+        box.innerText = '🔴 ĐANG KHÓA (User không mở được)';
+        box.className = 'status-box status-locked';
+        if (btn) btn.innerText = '🔑 Mở Cổng Rương';
+      } else {
+        box.innerText = '🟢 ĐÃ MỞ (User được mở rương)';
+        box.className = 'status-box status-unlocked';
+        if (btn) btn.innerText = '🔒 Khóa Cổng Rương';
+      }
+    }
+
+    async function resetSelected() {
+      const selectedIds = Array.from(document.querySelectorAll('.user-cb:checked')).map(cb => cb.value);
+      if (selectedIds.length === 0) return alert('Vui lòng chọn ít nhất 1 GLV!');
+
+      if (confirm(`Bạn có chắc muốn Reset rương của ${selectedIds.length} mục đã chọn?`)) {
         const res = await fetch('/api/admin/reset-selected', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userIds: selectedIds })
         });
-        
         if (res.ok) {
-          alert('Đã reset thành công các mục đã chọn!');
-          document.getElementById('selectAll').checked = false;
-          loadUsers();
+          alert('Đã reset các rương được chọn!');
+          fetchUsers();
         }
-      } catch (err) {
-        alert('Có lỗi xảy ra khi reset!');
       }
     }
 
-    // Reset tất cả
-    async function resetAllGLV() {
-      if (!confirm('Bạn có chắc chắn muốn Reset trạng thái rương của TẤT CẢ GLV?')) return;
-      try {
+    async function resetAll() {
+      if (confirm('CẢNH BÁO: Bạn có chắc muốn Reset trạng thái rương của TẤT CẢ Giáo Lý Viên?')) {
         const res = await fetch('/api/admin/reset-all', { method: 'POST' });
         if (res.ok) {
-          alert('Đã reset toàn bộ GLV!');
-          loadUsers();
+          alert('Đã reset toàn bộ rương!');
+          fetchUsers();
         }
-      } catch (err) { alert('Lỗi hệ thống!'); }
-    }
-
-    // Mở Modal Thêm mới
-    function openModal() {
-      document.getElementById('editUserId').value = '';
-      document.getElementById('modalTitle').innerText = 'Thêm Giáo Lý Viên Mới';
-      document.getElementById('userForm').reset();
-      document.getElementById('inputPassword').required = true;
-      document.getElementById('userModal').classList.remove('hidden');
-    }
-
-    // Mở Modal Chỉnh Sửa
-    function openModalEdit(id) {
-      const user = usersData.find(u => (u._id || u.id) == id);
-      if (!user) return;
-
-      document.getElementById('editUserId').value = id;
-      document.getElementById('modalTitle').innerText = 'Chỉnh Sửa Thông Tin / Đổi Lớp';
-      document.getElementById('inputFullname').value = user.fullname;
-      document.getElementById('inputUsername').value = user.username;
-      document.getElementById('inputClass').value = user.className || '';
-      document.getElementById('inputPassword').required = false;
-      document.getElementById('userModal').classList.remove('hidden');
-    }
-
-    function closeModal() {
-      document.getElementById('userModal').classList.add('hidden');
-    }
-
-    // Lưu thông tin
-    async function saveUser(e) {
-      e.preventDefault();
-      const id = document.getElementById('editUserId').value;
-      const body = {
-        fullname: document.getElementById('inputFullname').value.trim(),
-        username: document.getElementById('inputUsername').value.trim(),
-        className: document.getElementById('inputClass').value.trim(),
-        password: document.getElementById('inputPassword').value.trim()
-      };
-
-      const url = id ? `/api/admin/users/${id}` : '/api/admin/users';
-      const method = id ? 'PUT' : 'POST';
-
-      try {
-        const res = await fetch(url, {
-          method: method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-
-        if (res.ok) {
-          alert(id ? 'Cập nhật thành công!' : 'Thêm mới thành công!');
-          closeModal();
-          loadUsers();
-        } else {
-          const errData = await res.json();
-          alert(errData.message || 'Lỗi thao tác!');
-        }
-      } catch (err) {
-        alert('Không thể kết nối máy chủ!');
       }
     }
 
-    function handleLogout() {
-      localStorage.removeItem('currentUser');
-      window.location.href = '/login.html';
+    function handleExcelUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+
+          const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false, defval: '' });
+
+          let headerIndex = -1;
+          for (let i = 0; i < rows.length; i++) {
+            const rowStr = rows[i].join(' ').toUpperCase();
+            if (rowStr.includes('HỌ') || rowStr.includes('TÊN') || rowStr.includes('NĂM SINH')) {
+              headerIndex = i;
+              break;
+            }
+          }
+
+          if (headerIndex === -1) return alert('Không tìm thấy dòng tiêu đề trong file Excel!');
+
+          const headers = rows[headerIndex].map(h => String(h).trim());
+
+          const formattedData = [];
+          for (let i = headerIndex + 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || row.length === 0) continue;
+
+            const obj = {};
+            let hasData = false;
+            headers.forEach((header, colIdx) => {
+              if (header) {
+                const val = row[colIdx] !== undefined ? String(row[colIdx]).trim() : '';
+                obj[header] = val;
+                if (val) hasData = true;
+              }
+            });
+
+            if (hasData) formattedData.push(obj);
+          }
+
+          if (formattedData.length === 0) return alert('Không có dữ liệu trong file Excel!');
+
+          const res = await fetch('/api/admin/import-excel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ users: formattedData })
+          });
+
+          const result = await res.json();
+          if (res.ok) {
+            alert(result.message || `Đã nhập thành công!`);
+            fetchUsers();
+          } else {
+            alert(result.message || 'Lỗi nhập Excel!');
+          }
+
+        } catch (err) {
+          alert('Lỗi khi đọc file Excel!');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+      input.value = '';
     }
 
-    loadUsers();
+    function toggleSelectAll(master) {
+      document.querySelectorAll('.user-cb').forEach(cb => cb.checked = master.checked);
+    }
+
+    function logoutAdmin() {
+      localStorage.removeItem('currentUser');
+    }
+
+    initAdmin();
   </script>
 </body>
 </html>
