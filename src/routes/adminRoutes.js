@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const ClassMapping = require('../models/ClassMapping');
-
+const ClassItem = require('../models/ClassItem');
 // ==========================================
 // HÀM HỖ TRỢ DÙNG CHUNG
 // ==========================================
@@ -329,6 +329,42 @@ router.post('/delete-selected', async (req, res) => {
     res.json({ message: `Đã xóa thành công ${userIds.length} Giáo Lý Viên!` });
   } catch (err) {
     res.status(500).json({ message: 'Lỗi server khi xóa danh sách đã chọn', error: err.message });
+  }
+});
+// 1. Lấy danh sách tất cả các Lớp
+router.get('/classes', async (req, res) => {
+  try {
+    const classes = await ClassItem.find().sort({ createdAt: 1 });
+    res.json(classes);
+  } catch (err) {
+    res.status(500).json({ message: 'Lỗi máy chủ khi lấy danh sách lớp' });
+  }
+});
+
+// 2. Thêm Lớp mới
+router.post('/classes', async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: 'Tên lớp không được để trống!' });
+    }
+    const newClass = await ClassItem.create({ name: name.trim() });
+    res.json(newClass);
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({ message: 'Lớp này đã tồn tại!' });
+    }
+    res.status(500).json({ message: 'Lỗi máy chủ khi thêm lớp' });
+  }
+});
+
+// 3. Xóa Lớp
+router.delete('/classes/:id', async (req, res) => {
+  try {
+    await ClassItem.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Đã xóa lớp thành công!' });
+  } catch (err) {
+    res.status(500).json({ message: 'Lỗi máy chủ khi xóa lớp' });
   }
 });
 module.exports = router;

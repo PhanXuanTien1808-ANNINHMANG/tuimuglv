@@ -200,7 +200,7 @@
     .modal-content { background: white; padding: 24px; border-radius: 16px; width: 420px; max-width: 90%; }
     .form-group { margin-bottom: 12px; }
     .form-group label { display: block; font-weight: bold; margin-bottom: 4px; font-size: 0.9rem; }
-    .form-group input { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    .form-group input, .form-group select { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
 
     @media screen and (max-width: 900px) {
@@ -226,7 +226,7 @@
         <a href="login.html" onclick="logoutAdmin()" style="color: #636e72; text-decoration: none; font-weight: bold;">Đăng xuất</a>
       </div>
 
-      <!-- 🌟 KHUNG TÌM KIẾM & BỘ LỌC ĐỘNG -->
+      <!-- 🌟 KHUNG TÌM KIẾM VÀ BỘ LỌC ĐỘNG -->
       <div class="filter-bar">
         <input type="text" id="searchInput" class="search-input" oninput="applyFilterAndSort()" placeholder="🔍 Tìm kiếm theo Họ Tên hoặc Tên Thánh...">
         
@@ -236,9 +236,6 @@
           <option value="sector-asc">🏫 Ngành & Lớp (Chiên → Dự Trưởng)</option>
         </select>
       </div>
-
-      <!-- 🌟 DATALIST LỚP ĐỘNG (JS SẼ TỰ TẠO DỰA TRÊN DỮ LIỆU) -->
-      <datalist id="classListOptions"></datalist>
 
       <!-- CONTAINER CÓ THANH TRƯỢT ĐỨNG & NGANG -->
       <div class="table-scroll-container">
@@ -287,6 +284,11 @@
           </button>
         </div>
 
+        <!-- Nút mở Modal Quản lý Lớp -->
+        <button class="btn-action" style="background: #6c5ce7; color: white;" onclick="openClassModal()">
+          🏫 Quản Lý Danh Sách Lớp
+        </button>
+
         <button class="btn-action btn-add" onclick="openAddModal()">
           👤 Thêm Thủ Công
         </button>
@@ -331,8 +333,8 @@
       </div>
       <div class="form-group">
         <label>Lớp / Phân Công:</label>
-        <!-- Ô nhập vừa gõ vừa chọn gợi ý -->
-        <input type="text" id="addClassName" list="classListOptions" placeholder="Gõ hoặc chọn lớp từ danh sách">
+        <!-- Thẻ select cho ô chọn lớp -->
+        <select id="addClassName" class="table-input"></select>
       </div>
       <div class="form-group">
         <label>Chi Đoàn (Tùy chọn):</label>
@@ -342,6 +344,31 @@
       <div class="modal-actions">
         <button onclick="closeAddModal()" style="padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;">Hủy</button>
         <button onclick="saveNewUser()" style="padding: 8px 16px; background: #00b894; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Thêm Mới</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL QUẢN LÝ DẠNG LỚP HỌC -->
+  <div class="modal" id="classModal">
+    <div class="modal-content" style="max-width: 500px;">
+      <h3>🏫 Quản Lý Danh Sách Lớp Học</h3>
+      <p style="font-size: 0.85rem; color: #636e72; margin-bottom: 12px;">Các lớp được thêm ở đây sẽ hiện trong danh sách lựa chọn khi phân công.</p>
+      
+      <!-- Ô nhập thêm lớp mới -->
+      <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+        <input type="text" id="newClassNameInput" placeholder="VD: Chiên 1A, Ấu 2B..." class="table-input" style="flex: 1;" onkeydown="handleClassInputKey(event)">
+        <button class="btn-tbl btn-tbl-save" onclick="addClassItem()">+ Thêm</button>
+      </div>
+
+      <!-- Danh sách lớp hiện có -->
+      <div style="max-height: 250px; overflow-y: auto; border: 1px solid #dfe6e9; border-radius: 8px; padding: 8px;">
+        <ul id="classListContainer" style="list-style: none; padding: 0; margin: 0;">
+          <!-- JS sẽ tự đổ danh sách các lớp vào đây -->
+        </ul>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 16px;">
+        <button class="btn-tbl btn-tbl-cancel" onclick="closeClassModal()">Đóng</button>
       </div>
     </div>
   </div>
@@ -359,14 +386,56 @@
 
     let isLocked = true;
     let allUsers = [];
+    let systemClasses = []; // Danh sách Lớp lấy từ Database
     let isBulkEditing = false;
 
     // Danh sách thứ tự ưu tiên các Ngành Thiếu Nhi
     const SECTOR_ORDER = ['chiên', 'ấu', 'thiếu', 'nghĩa', 'hiệp', 'dự trưởng'];
 
     async function initAdmin() {
+      await fetchSystemClasses(); // Tải danh sách lớp trước
       await fetchUsers();
       await fetchLockStatus();
+    }
+
+    // 🌟 LẤY DANH SÁCH LỚP TỪ SERVER
+    async function fetchSystemClasses() {
+      try {
+        const res = await fetch('/api/admin/classes');
+        if (res.ok) {
+          systemClasses = await res.json();
+          updateAddModalClassOptions();
+        }
+      } catch (err) {
+        console.error('Lỗi lấy danh sách lớp:', err);
+      }
+    }
+
+    // Cập nhật tùy chọn lớp cho Modal Thêm Thủ Công
+    function updateAddModalClassOptions() {
+      const select = document.getElementById('addClassName');
+      if (!select) return;
+      let options = `<option value="">-- Chưa xếp --</option>`;
+      systemClasses.forEach(c => {
+        options += `<option value="${c.name}">${c.name}</option>`;
+      });
+      select.innerHTML = options;
+    }
+
+    // Tạo thẻ <select> lựa chọn Lớp cho bảng Admin
+    function renderClassSelectOptions(selectedClassName, dataId = '', isBulk = false) {
+      let options = `<option value="">-- Chưa xếp --</option>`;
+      
+      systemClasses.forEach(c => {
+        const isSelected = c.name === selectedClassName ? 'selected' : '';
+        options += `<option value="${c.name}" ${isSelected}>${c.name}</option>`;
+      });
+
+      const classAttr = isBulk 
+        ? `class="table-input bulk-class" data-id="${dataId}"` 
+        : `id="edit-class-${dataId}" class="table-input"`;
+
+      return `<select ${classAttr}>${options}</select>`;
     }
 
     async function fetchUsers() {
@@ -374,41 +443,19 @@
         const res = await fetch('/api/admin/users');
         if (res.ok) {
           allUsers = await res.json();
-          updateClassDatalist(); // 🌟 Tự động quét và sinh danh sách lớp gợi ý
-          applyFilterAndSort(); // 🌟 Áp dụng bộ lọc & render bảng
+          applyFilterAndSort(); // Áp dụng bộ lọc & render bảng
         }
       } catch (err) {
         console.error('Lỗi tải danh sách GLV:', err);
       }
     }
 
-    // 🌟 QUÉT VÀ TẠO DANH SÁCH LỚP DYNAMIC CHO DATALIST
-    function updateClassDatalist() {
-      const datalist = document.getElementById('classListOptions');
-      if (!datalist) return;
-
-      // Lấy danh sách lớp duy nhất (Loại bỏ các lớp rỗng hoặc "—")
-      const classesSet = new Set();
-      allUsers.forEach(u => {
-        const cls = (u.className || '').trim();
-        if (cls && cls !== '—') classesSet.add(cls);
-      });
-
-      // Chuyển set thành mảng và sắp xếp theo thứ tự Ngành
-      const sortedClasses = Array.from(classesSet).sort((a, b) => compareClasses(a, b));
-
-      datalist.innerHTML = sortedClasses.map(cls => `<option value="${cls}">`).join('');
-    }
-
     // 🌟 LOGIC TÌM KIẾM VÀ SẮP XẾP
-  // 🌟 LOGIC TÌM KIẾM VÀ SẮP XẾP (ĐÃ CẬP NHẬT: CHƯA XẾP LỚP LUÔN Ở CUỐI)
- // 🌟 1. KIỂM TRA LỚP CHƯA XẾP BẰNG HÀM TẬP TRUNG
     function isUnassignedClass(classNameStr) {
       const cls = (classNameStr || '').trim().toLowerCase();
       return !cls || cls === '—' || cls.includes('chưa xếp') || cls.includes('chua xep');
     }
 
-    // 🌟 2. HÀM SO SÁNH LỚP THEO THỨ TỰ NGÀNH (CHƯA XẾP LỚP LUÔN Ở CUỐI)
     function compareClasses(classAStr, classBStr) {
       const a = (classAStr || '').trim().toLowerCase();
       const b = (classBStr || '').trim().toLowerCase();
@@ -416,7 +463,6 @@
       const isUnassignedA = isUnassignedClass(classAStr);
       const isUnassignedB = isUnassignedClass(classBStr);
 
-      // Đẩy chưa xếp lớp xuống dưới cùng
       if (isUnassignedA && !isUnassignedB) return 1;
       if (!isUnassignedA && isUnassignedB) return -1;
       if (isUnassignedA && isUnassignedB) return 0;
@@ -431,25 +477,21 @@
         return indexA - indexB;
       }
 
-      // Cùng ngành -> So sánh chữ và số (VD: Chiên 1A < Chiên 1B < Chiên 2A)
       return a.localeCompare(b, 'vi', { numeric: true, sensitivity: 'base' });
     }
 
-    // 🌟 3. LOGIC TÌM KIẾM VÀ SẮP XẾP CHUẨN ĐỒNG BỘ
     function applyFilterAndSort() {
       const keyword = (document.getElementById('searchInput').value || '').trim().toLowerCase();
       const sortOption = document.getElementById('sortOption').value;
 
-      // Lọc danh sách không bị sót bất kỳ trường thông tin tên nào
       let filteredUsers = allUsers.filter(u => {
         const fullname = (u.fullname || u.fullName || u.name || '').toLowerCase();
         const holyName = (u.holyName || u.holyname || '').toLowerCase();
         
-        if (!keyword) return true; // Nếu chưa gõ tìm kiếm -> Hiển thị TẤT CẢ
+        if (!keyword) return true;
         return fullname.includes(keyword) || holyName.includes(keyword);
       });
 
-      // Xử lý Sắp Xếp
       if (sortOption === 'name-asc') {
         filteredUsers.sort((a, b) => {
           const isUnassignedA = isUnassignedClass(a.className);
@@ -458,7 +500,6 @@
           if (isUnassignedA && !isUnassignedB) return 1;
           if (!isUnassignedA && isUnassignedB) return -1;
 
-          // So sánh theo TÊN CHÍNH (Từ cuối cùng trong Họ và Tên)
           const nameA = (a.fullname || a.fullName || a.name || '').trim().split(' ').pop();
           const nameB = (b.fullname || b.fullName || b.name || '').trim().split(' ').pop();
           return nameA.localeCompare(nameB, 'vi', { sensitivity: 'base' });
@@ -470,7 +511,7 @@
       renderTable(filteredUsers);
     }
 
-    // 🌟 4. HÀM RENDER BẢNG BẮT TRỌN VẸN DỮ LIỆU CỦA MỌI USER
+    // 🌟 HÀM RENDER BẢNG VỚI KHẢ NĂNG CHỌN LỚP DROPDOWN
     function renderTable(users) {
       const tbody = document.getElementById('userTableBody');
       tbody.innerHTML = '';
@@ -488,10 +529,12 @@
           ? `<span class="badge badge-success">Đã Mở</span>`
           : `<span class="badge badge-pending">Chưa Mở</span>`;
 
-        // Bắt lấy thông tin hiển thị chính xác
         const displayName = u.fullname || u.fullName || u.name || '—';
         const displayHoly = u.holyName || u.holyname || '—';
         const displayDob = u.dateOfBirth || u.dob || '—';
+
+        // Select Lớp dạng thả xuống
+        const classSelectHTML = renderClassSelectOptions(u.className || '', u._id, isBulkEditing);
 
         if (isBulkEditing) {
           tr.innerHTML = `
@@ -500,7 +543,7 @@
             <td><input type="text" class="table-input bulk-holy" data-id="${u._id}" value="${displayHoly !== '—' ? displayHoly : ''}"></td>
             <td><input type="text" class="table-input bulk-fullname" data-id="${u._id}" value="${displayName !== '—' ? displayName : ''}"></td>
             <td><input type="text" class="table-input bulk-dob" data-id="${u._id}" value="${displayDob !== '—' ? displayDob : ''}"></td>
-            <td><input type="text" list="classListOptions" class="table-input bulk-class" data-id="${u._id}" value="${u.className || ''}"></td>
+            <td>${classSelectHTML}</td>
             <td><input type="text" class="table-input bulk-chidoan" data-id="${u._id}" value="${u.chidoan || ''}" placeholder="Tự xếp"></td>
             <td style="text-align: center;">${statusBadge}</td>
             <td style="text-align: center;">
@@ -583,7 +626,7 @@
         const holyInput = document.querySelector(`.bulk-holy[data-id="${id}"]`);
         const nameInput = document.querySelector(`.bulk-fullname[data-id="${id}"]`);
         const dobInput = document.querySelector(`.bulk-dob[data-id="${id}"]`);
-        const classInput = document.querySelector(`.bulk-class[data-id="${id}"]`);
+        const classSelect = document.querySelector(`.bulk-class[data-id="${id}"]`);
         const chidoanInput = document.querySelector(`.bulk-chidoan[data-id="${id}"]`);
 
         if (nameInput) {
@@ -595,7 +638,7 @@
             holyName: holyInput ? holyInput.value.trim() : '',
             fullname: fullname,
             dateOfBirth: dobInput ? dobInput.value.trim() : '',
-            className: classInput ? classInput.value.trim() : '',
+            className: classSelect ? classSelect.value.trim() : '',
             chidoan: chidoanInput ? chidoanInput.value.trim() : ''
           });
         }
@@ -624,13 +667,15 @@
       if (!u) return;
 
       const tr = document.getElementById(`row-${id}`);
+      const classSelectHTML = renderClassSelectOptions(u.className || '', id, false);
+
       tr.innerHTML = `
         <td style="text-align: center;"><input type="checkbox" disabled></td>
         <td style="text-align: center; font-weight: bold;">—</td>
-        <td><input type="text" class="table-input" id="edit-holy-${id}" value="${u.holyName || ''}"></td>
+        <td><input type="text" class="table-input" id="edit-holy-${id}" value="${u.holyName || u.holyname || ''}"></td>
         <td><input type="text" class="table-input" id="edit-fullname-${id}" value="${u.fullname || u.fullName || ''}"></td>
         <td><input type="text" class="table-input" id="edit-dob-${id}" value="${u.dateOfBirth || u.dob || ''}"></td>
-        <td><input type="text" list="classListOptions" class="table-input" id="edit-class-${id}" value="${u.className || ''}"></td>
+        <td>${classSelectHTML}</td>
         <td><input type="text" class="table-input" id="edit-chidoan-${id}" value="${u.chidoan || ''}" placeholder="Tự xếp"></td>
         <td style="text-align: center;">—</td>
         <td style="text-align: center; white-space: nowrap;">
@@ -670,6 +715,82 @@
         fetchUsers();
       } else {
         alert('Lỗi khi xóa!');
+      }
+    }
+
+    // 🌟 QUẢN LÝ MODAL QUẢN LÝ LỚP HỌC
+    function openClassModal() {
+      document.getElementById('classModal').style.display = 'flex';
+      renderClassListModal();
+    }
+
+    function closeClassModal() {
+      document.getElementById('classModal').style.display = 'none';
+      applyFilterAndSort(); 
+    }
+
+    function renderClassListModal() {
+      const container = document.getElementById('classListContainer');
+      container.innerHTML = '';
+
+      if (systemClasses.length === 0) {
+        container.innerHTML = '<li style="text-align: center; color: #888;">Chưa có lớp nào được tạo.</li>';
+        return;
+      }
+
+      systemClasses.forEach(item => {
+        const li = document.createElement('li');
+        li.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #f1f2f6;';
+        li.innerHTML = `
+          <span><b>${item.name}</b></span>
+          <button class="btn-tbl btn-tbl-delete" onclick="deleteClassItem('${item._id}')">Xóa</button>
+        `;
+        container.appendChild(li);
+      });
+    }
+
+    async function addClassItem() {
+      const input = document.getElementById('newClassNameInput');
+      const name = input.value.trim();
+      if (!name) return alert('Vui lòng nhập tên lớp!');
+
+      try {
+        const res = await fetch('/api/admin/classes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          input.value = '';
+          await fetchSystemClasses();
+          renderClassListModal();
+        } else {
+          alert(data.message || 'Lỗi khi thêm lớp');
+        }
+      } catch (err) {
+        alert('Không thể kết nối đến máy chủ');
+      }
+    }
+// Bắt sự kiện phím Enter khi đang gõ tên lớp mới
+function handleClassInputKey(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault(); // Ngăn ngừa reload trang hoặc submit form mặc định
+    addClassItem();
+  }
+}
+    async function deleteClassItem(id) {
+      if (!confirm('Bạn có chắc muốn xóa lớp này khỏi danh sách tùy chọn?')) return;
+
+      try {
+        const res = await fetch(`/api/admin/classes/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          await fetchSystemClasses();
+          renderClassListModal();
+        }
+      } catch (err) {
+        alert('Không thể kết nối đến máy chủ');
       }
     }
 
