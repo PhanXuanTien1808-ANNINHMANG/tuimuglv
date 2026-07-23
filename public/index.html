@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Nhiệm Vụ Hệ Thống</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <!-- Thư viện hiệu ứng pháo hoa nhẹ & mượt -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
   <style>
     /* Bổ sung CSS chống đơ vuốt di động ngay trong trang */
     html, body {
@@ -97,175 +100,213 @@
     </div>
   </div>
 
-<script>
-  const userId = user.id || user._id;
+  <script>
+    const userId = user.id || user._id;
 
-  // 🌟 1. CẬP NHẬT LỜI CHÀO CÓ TÊN THÁNH VÀ CHỮ TRƯỞNG
-  function updateWelcomeName(userInfo) {
-    const holy = userInfo.holyName || userInfo.holyname ? (userInfo.holyName || userInfo.holyname) + ' ' : '';
-    const fullName = userInfo.fullname || userInfo.fullName || userInfo.name || '';
-    const displayName = `Trưởng ${holy}${fullName}`.trim();
-    document.getElementById('userName').innerText = displayName;
-  }
+    // 🌟 1. CẬP NHẬT LỜI CHÀO CÓ TÊN THÁNH VÀ CHỮ TRƯỞNG
+    function updateWelcomeName(userInfo) {
+      const holy = userInfo.holyName || userInfo.holyname ? (userInfo.holyName || userInfo.holyname) + ' ' : '';
+      const fullName = userInfo.fullname || userInfo.fullName || userInfo.name || '';
+      const displayName = `Trưởng ${holy}${fullName}`.trim();
+      document.getElementById('userName').innerText = displayName;
+    }
 
-  // Khởi tạo tên ban đầu
-  updateWelcomeName(user);
+    // Khởi tạo tên ban đầu
+    updateWelcomeName(user);
 
-  // Biến lưu danh sách đồng đội tạm thời
-  let currentTeammates = [];
+    // Biến lưu danh sách đồng đội tạm thời
+    let currentTeammates = [];
 
-  // 2. ĐỒNG BỘ TRẠNG THÁI KHI VÀO TRANG
-  async function checkCurrentStatus() {
-    if (!userId) return;
+    // 2. ĐỒNG BỘ TRẠNG THÁI KHI VÀO TRANG
+    async function checkCurrentStatus() {
+      if (!userId) return;
 
-    try {
-      const res = await fetch(`/api/chest/status/${userId}`);
-      if (res.ok) {
-        const data = await res.json();
-        
-        Object.assign(user, data.user || data);
-        currentTeammates = data.teammates || []; 
-        localStorage.setItem('currentUser', JSON.stringify(user));
+      try {
+        const res = await fetch(`/api/chest/status/${userId}`);
+        if (res.ok) {
+          const data = await res.json();
+          
+          Object.assign(user, data.user || data);
+          currentTeammates = data.teammates || []; 
+          localStorage.setItem('currentUser', JSON.stringify(user));
 
-        // Cập nhật lại Lời chào sau khi đồng bộ dữ liệu mới nhất
-        updateWelcomeName(user);
+          // Cập nhật lại Lời chào sau khi đồng bộ dữ liệu mới nhất
+          updateWelcomeName(user);
 
-        const targetClass = user.className || user.chidoan;
-        if (user.opened) {
-          renderOpenedState(targetClass);
-        } else {
-          renderClosedState();
+          const targetClass = user.className || user.chidoan;
+          if (user.opened) {
+            renderOpenedState(targetClass);
+          } else {
+            renderClosedState();
+          }
         }
+      } catch (err) {
+        console.error('Lỗi kết nối máy chủ:', err);
+        if (user.opened) renderOpenedState(user.className || user.chidoan);
       }
-    } catch (err) {
-      console.error('Lỗi kết nối máy chủ:', err);
-      if (user.opened) renderOpenedState(user.className || user.chidoan);
-    }
-  }
-
-  // 3. MỞ RƯƠNG
-  async function openChest() {
-    if (user.opened) {
-      showLetter();
-      return;
     }
 
-    const chestWrapper = document.getElementById('chestWrapper');
-    chestWrapper.classList.add('shaking');
-
-    try {
-      const res = await fetch('/api/chest/open', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: userId })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        chestWrapper.classList.remove('shaking');
-        alert(data.message || 'Lỗi khi mở rương!');
+    // 3. MỞ RƯƠNG
+    async function openChest() {
+      if (user.opened) {
+        showLetter();
         return;
       }
 
-      setTimeout(() => {
+      const chestWrapper = document.getElementById('chestWrapper');
+      chestWrapper.classList.add('shaking');
+
+      try {
+        const res = await fetch('/api/chest/open', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: userId })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          chestWrapper.classList.remove('shaking');
+          alert(data.message || 'Lỗi khi mở rương!');
+          return;
+        }
+
+        setTimeout(() => {
+          chestWrapper.classList.remove('shaking');
+
+          user.opened = true;
+          Object.assign(user, data.user);
+          currentTeammates = data.teammates || [];
+          localStorage.setItem('currentUser', JSON.stringify(user));
+
+          updateWelcomeName(user);
+
+          const targetClass = data.user.className || data.user.chidoan;
+          renderOpenedState(targetClass);
+          showLetter(); // Khi mở thư sẽ tự động bắn pháo hoa
+        }, 1000);
+
+      } catch (err) {
         chestWrapper.classList.remove('shaking');
-
-        user.opened = true;
-        Object.assign(user, data.user);
-        currentTeammates = data.teammates || [];
-        localStorage.setItem('currentUser', JSON.stringify(user));
-
-        updateWelcomeName(user);
-
-        const targetClass = data.user.className || data.user.chidoan;
-        renderOpenedState(targetClass);
-        triggerConfetti();
-        showLetter();
-      }, 1000);
-
-    } catch (err) {
-      chestWrapper.classList.remove('shaking');
-      console.error('Lỗi kết nối:', err);
-      alert('Không thể kết nối đến máy chủ!');
+        console.error('Lỗi kết nối:', err);
+        alert('Không thể kết nối đến máy chủ!');
+      }
     }
-  }
 
-  function renderOpenedState(className) {
-    document.getElementById('treasureChest').classList.add('open');
-    document.getElementById('instructionText').innerText = `Chi đoàn: ${className || 'Đã nhận phân công'} ✨ (Chạm rương để xem lại)`;
-    document.getElementById('reopenContainer').classList.remove('hidden');
-  }
+    function renderOpenedState(className) {
+      document.getElementById('treasureChest').classList.add('open');
+      document.getElementById('instructionText').innerText = `Chi đoàn: ${className || 'Đã nhận phân công'} ✨ (Chạm rương để xem lại)`;
+      document.getElementById('reopenContainer').classList.remove('hidden');
+    }
 
-  function renderClosedState() {
-    document.getElementById('treasureChest').classList.remove('open');
-    document.getElementById('instructionText').innerText = 'Chạm vào Rương Báu để mở Lá Thư Phân Công!';
-    document.getElementById('reopenContainer').classList.add('hidden');
-    closeLetter();
-  }
+    function renderClosedState() {
+      document.getElementById('treasureChest').classList.remove('open');
+      document.getElementById('instructionText').innerText = 'Chạm vào Rương Báu để mở Lá Thư Phân Công!';
+      document.getElementById('reopenContainer').classList.add('hidden');
+      closeLetter();
+    }
 
-  // 4. RENDER NỘI DUNG LÁ THƯ
+    // 4. RENDER NỘI DUNG LÁ THƯ
   function showLetter() {
-    const targetClass = user.className || user.chidoan || 'Chưa phân công';
-    document.getElementById('letterClass').innerText = targetClass;
-    
-    const myHoly = user.holyName || user.holyname ? (user.holyName || user.holyname) + ' ' : '';
-    const myName = user.fullname || user.fullName || user.name || '';
-    document.getElementById('letterHolyName').innerText = myHoly;
-    document.getElementById('letterFullname').innerText = myName;
-    document.getElementById('letterSubrole').innerText = user.subrole ? `(${user.subrole})` : '';
+  const targetClass = user.className || user.chidoan || 'Chưa phân công';
+  document.getElementById('letterClass').innerText = targetClass;
+  
+  const myHoly = user.holyName || user.holyname ? (user.holyName || user.holyname) + ' ' : '';
+  const myName = user.fullname || user.fullName || user.name || '';
+  document.getElementById('letterHolyName').innerText = myHoly;
+  document.getElementById('letterFullname').innerText = myName;
+  document.getElementById('letterSubrole').innerText = user.subrole ? `(${user.subrole})` : '';
 
-    // Render danh sách Anh/Chị cùng lớp
-    const teammatesListEl = document.getElementById('teammatesList');
-    teammatesListEl.innerHTML = '';
+  // Render danh sách Anh/Chị cùng lớp
+  const teammatesListEl = document.getElementById('teammatesList');
+  teammatesListEl.innerHTML = '';
 
-    const validTeammates = (currentTeammates || []).filter(mate => {
-      const mateId = mate._id || mate.id;
-      const myId = user._id || user.id;
-      if (mateId && myId) return mateId !== myId;
+  const validTeammates = (currentTeammates || []).filter(mate => {
+    const mateId = mate._id || mate.id;
+    const myId = user._id || user.id;
+    if (mateId && myId) return mateId !== myId;
 
-      const mateName = (mate.fullname || mate.fullName || mate.name || '').trim().toLowerCase();
-      return mateName !== myName.trim().toLowerCase();
+    const mateName = (mate.fullname || mate.fullName || mate.name || '').trim().toLowerCase();
+    return mateName !== myName.trim().toLowerCase();
+  });
+
+  if (validTeammates.length > 0) {
+    validTeammates.forEach(mate => {
+      const li = document.createElement('li');
+      const holy = mate.holyName || mate.holyname ? `${mate.holyName || mate.holyname} ` : '';
+      const name = mate.fullname || mate.fullName || mate.name || '';
+
+      const rawRole = mate.subrole || mate.chidoan || '';
+      const isUnassignedRole = !rawRole || rawRole.toLowerCase().includes('chưa xếp') || rawRole.toLowerCase().includes('chua xep');
+      
+      const role = (!isUnassignedRole && rawRole !== '—') ? ` — <i>${rawRole}</i>` : '';
+
+      li.innerHTML = `• ${holy}<b>${name}</b>${role}`;
+      teammatesListEl.appendChild(li);
+    });
+  } else {
+    teammatesListEl.innerHTML = '<li><i>Chưa có thành viên khác trong lớp</i></li>';
+  }
+
+  // 1. Mở popup lá thư lên trước
+  document.getElementById('letterOverlay').classList.remove('hidden');
+
+  // 💥 2. BẮN PHÁO HOA TẬP TRUNG NGAY TRÊN POPUP LÁ THƯ
+  setTimeout(() => {
+    triggerFireworks();
+  }, 100);
+}
+    function closeLetter() {
+      document.getElementById('letterOverlay').classList.add('hidden');
+    }
+
+    // 💥 HÀM TẠO HIỆU ỨNG PHÁO HOA RỰC RỠ 2 BÊN
+   // 💥 HÀM TẠO HIỆU ỨNG PHÁO HOA NỔ XUNG QUANH / PHÍA TRÊN LÁ THƯ
+// 💥 BẮN PHÁO HOA BUNG RA TỪ CHÍNH GIỮA TẤM LÁ THƯ
+// 💥 HÀM BẮN PHÁO HOA TỪ 2 BÊN MÉP BẮN VÀO LÁ THƯ (DỒN DẬP & RỰC RỠ)
+function triggerFireworks() {
+  if (typeof confetti !== 'function') return;
+
+  const duration = 2.5 * 1000; // Thời gian bắn kéo dài 2.5 giây
+  const animationEnd = Date.now() + duration;
+
+  const interval = setInterval(function() {
+    const timeLeft = animationEnd - Date.now();
+
+    if (timeLeft <= 0) {
+      return clearInterval(interval);
+    }
+
+    // Tăng số lượng hạt pháo hoa lên gấp đôi cho hoành tráng
+    const particleCount = 100 * (timeLeft / duration);
+
+    // 🎇 1. Bên TRÁI bắn xéo vào chính giữa tấm thư (Góc 45 độ)
+    confetti({
+      particleCount: particleCount,
+      angle: 45,
+      spread: 70,
+      origin: { x: 0, y: 0.6 }, // Xuất phát từ mép trái màn hình
+      colors: ['#ff4757', '#ffa502', '#2ed573', '#1e90ff', '#eccc68', '#ffffff'],
+      zIndex: 999999
     });
 
-    if (validTeammates.length > 0) {
-      validTeammates.forEach(mate => {
-        const li = document.createElement('li');
-        const holy = mate.holyName || mate.holyname ? `${mate.holyName || mate.holyname} ` : '';
-        const name = mate.fullname || mate.fullName || mate.name || '';
-
-        // 🌟 BỎ CHỮ CHI ĐOÀN CHƯA XẾP BẰNG LOGIC KIỂM TRA
-        const rawRole = mate.subrole || mate.chidoan || '';
-        const isUnassignedRole = !rawRole || rawRole.toLowerCase().includes('chưa xếp') || rawRole.toLowerCase().includes('chua xep');
-        
-        const role = (!isUnassignedRole && rawRole !== '—') ? ` — <i>${rawRole}</i>` : '';
-
-        li.innerHTML = `• ${holy}<b>${name}</b>${role}`;
-        teammatesListEl.appendChild(li);
-      });
-    } else {
-      teammatesListEl.innerHTML = '<li><i>Chưa có thành viên khác trong lớp</i></li>';
+    // 🎇 2. Bên PHẢI bắn xéo vào chính giữa tấm thư (Góc 135 độ)
+    confetti({
+      particleCount: particleCount,
+      angle: 135,
+      spread: 70,
+      origin: { x: 1, y: 0.6 }, // Xuất phát từ mép phải màn hình
+      colors: ['#ff4757', '#ffa502', '#2ed573', '#1e90ff', '#eccc68', '#ffffff'],
+      zIndex: 999999
+    });
+  }, 180); // Cứ mỗi 180ms lại bắn 1 đợt mới dồn dập
+}
+    function logout() {
+      localStorage.removeItem('currentUser');
+      window.location.href = 'login.html';
     }
 
-    document.getElementById('letterOverlay').classList.remove('hidden');
-  }
-
-  function closeLetter() {
-    document.getElementById('letterOverlay').classList.add('hidden');
-  }
-
-  function triggerConfetti() {
-    if (typeof confetti === 'function') {
-      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-    }
-  }
-
-  function logout() {
-    localStorage.removeItem('currentUser');
-    window.location.href = 'login.html';
-  }
-
-  checkCurrentStatus();
-</script>
+    checkCurrentStatus();
+  </script>
 </body>
 </html>
