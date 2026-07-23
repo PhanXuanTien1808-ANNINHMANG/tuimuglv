@@ -40,7 +40,7 @@ router.post('/open', async (req, res) => {
     currentUser.opened = true;
     await currentUser.save();
 
-    // 🌟 4. LÓC ĐỒNG ĐỘI/ANH CHỊ CÙNG LỚP (LOẠI BỎ 'CHI ĐOÀN CHƯA XẾP' & TRƯỞNG)
+    // 🌟 4. LỌC ĐỒNG ĐỘI/ANH CHỊ CÙNG LỚP
     const isTruong = currentUser.role === 'admin' || currentUser.role === 'truong' || currentUser.isTruong;
     const rawClass = currentUser.className || currentUser.chidoan;
     const validClass = isValidClass(rawClass) ? rawClass.trim() : null;
@@ -48,30 +48,27 @@ router.post('/open', async (req, res) => {
     let teammates = [];
     let hideClassmates = false;
 
-    // Nếu là Trưởng HOẶC Lớp thuộc dạng "Chi đoàn chưa xếp" -> Không lấy danh sách đồng đội
+    // Nếu là Trưởng HOẶC Lớp chưa hợp lệ -> Không lấy danh sách đồng đội
     if (isTruong || !validClass) {
       teammates = [];
       hideClassmates = true;
     } else {
-      // Tìm đồng đội cùng Lớp/Chi đoàn (Loại trừ chính mình và loại trừ những ai 'Chi đoàn chưa xếp')
+      // Tìm đồng đội cùng Lớp (So sánh khớp lớp validClass và loại trừ chính mình)
       teammates = await User.find({
         _id: { $ne: currentUser._id },
         $or: [
           { className: validClass },
           { chidoan: validClass }
-        ],
-        // Đảm bảo đồng đội cũng không mang giá trị chưa xếp
-        chidoan: { $nin: ['Chi đoàn chưa xếp', 'Chi doan chua xep', '—', '', null] },
-        className: { $nin: ['Chi đoàn chưa xếp', 'Chi doan chua xep', '—', '', null] }
-      }).select('holyName fullname subrole className chidoan opened');
+        ]
+      }).select('holyName holyname fullname fullName name subrole className chidoan opened');
     }
 
     // 5. Trả kết quả về Frontend
     res.json({
       message: 'Mở rương thành công!',
       user: {
-        holyName: currentUser.holyName,
-        fullname: currentUser.fullname,
+        holyName: currentUser.holyName || currentUser.holyname,
+        fullname: currentUser.fullname || currentUser.fullName || currentUser.name,
         className: validClass || '',
         subrole: currentUser.subrole,
         chidoan: currentUser.chidoan,
@@ -79,7 +76,7 @@ router.post('/open', async (req, res) => {
         role: currentUser.role
       },
       teammates: teammates,
-      hideClassmates: hideClassmates // Cờ báo Frontend ẩn hoàn toàn khung Anh/Chị cùng lớp
+      hideClassmates: hideClassmates
     });
 
   } catch (err) {
@@ -112,10 +109,8 @@ router.get('/status/:userId', async (req, res) => {
         $or: [
           { className: validClass },
           { chidoan: validClass }
-        ],
-        chidoan: { $nin: ['Chi đoàn chưa xếp', 'Chi doan chua xep', '—', '', null] },
-        className: { $nin: ['Chi đoàn chưa xếp', 'Chi doan chua xep', '—', '', null] }
-      }).select('holyName fullname subrole className chidoan opened');
+        ]
+      }).select('holyName holyname fullname fullName name subrole className chidoan opened');
     }
 
     // Lấy trạng thái Khóa của Hệ thống
@@ -124,8 +119,8 @@ router.get('/status/:userId', async (req, res) => {
 
     res.json({
       user: {
-        holyName: user.holyName,
-        fullname: user.fullname,
+        holyName: user.holyName || user.holyname,
+        fullname: user.fullname || user.fullName || user.name,
         className: validClass || '',
         subrole: user.subrole,
         chidoan: user.chidoan,

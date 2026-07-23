@@ -6,6 +6,24 @@
   <title>Nhiệm Vụ Hệ Thống</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    /* Bổ sung CSS chống đơ vuốt di động ngay trong trang */
+    html, body {
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
+    }
+    .letter-overlay {
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
+    }
+    .letter-card {
+      max-height: 85vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  </style>
 </head>
 <body>
 
@@ -19,7 +37,7 @@
 
   <div class="main-container">
     <div class="welcome-card">
-      <h3>Xin chào, <span id="userName">...</span>! 👋</h3>
+      <h3>Xin chào <span id="userName">...</span>! 👋</h3>
       <p>Chào mừng bạn đến với chương trình nhận lớp năm học mới!</p>
     </div>
 
@@ -80,14 +98,23 @@
   </div>
 
 <script>
-  const displayName = user.fullname || user.fullName || 'Giáo Lý Viên';
-  document.getElementById('userName').innerText = displayName;
   const userId = user.id || user._id;
+
+  // 🌟 1. CẬP NHẬT LỜI CHÀO CÓ TÊN THÁNH VÀ CHỮ TRƯỞNG
+  function updateWelcomeName(userInfo) {
+    const holy = userInfo.holyName || userInfo.holyname ? (userInfo.holyName || userInfo.holyname) + ' ' : '';
+    const fullName = userInfo.fullname || userInfo.fullName || userInfo.name || '';
+    const displayName = `Trưởng ${holy}${fullName}`.trim();
+    document.getElementById('userName').innerText = displayName;
+  }
+
+  // Khởi tạo tên ban đầu
+  updateWelcomeName(user);
 
   // Biến lưu danh sách đồng đội tạm thời
   let currentTeammates = [];
 
-  // 1. ĐỒNG BỘ TRẠNG THÁI KHI VÀO TRANG
+  // 2. ĐỒNG BỘ TRẠNG THÁI KHI VÀO TRANG
   async function checkCurrentStatus() {
     if (!userId) return;
 
@@ -97,8 +124,11 @@
         const data = await res.json();
         
         Object.assign(user, data.user || data);
-        currentTeammates = data.teammates || []; // 🌟 Đã tự động nhận danh sách đồng đội khi Reload
+        currentTeammates = data.teammates || []; 
         localStorage.setItem('currentUser', JSON.stringify(user));
+
+        // Cập nhật lại Lời chào sau khi đồng bộ dữ liệu mới nhất
+        updateWelcomeName(user);
 
         const targetClass = user.className || user.chidoan;
         if (user.opened) {
@@ -113,57 +143,53 @@
     }
   }
 
-  // 2. MỞ RƯƠNG
-// 2. MỞ RƯƠNG
-async function openChest() {
-  // Nếu đã mở rương rồi thì chỉ mở popup xem lại lá thư
-  if (user.opened) {
-    showLetter();
-    return;
-  }
-
-  const chestWrapper = document.getElementById('chestWrapper');
-  
-  // Bắt đầu hiệu ứng rung rương
-  chestWrapper.classList.add('shaking');
-
-  try {
-    const res = await fetch('/api/chest/open', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: userId })
-    });
-
-    const data = await res.json();
-
-    // Nếu Backend báo lỗi (ví dụ: bị khóa cổng 403 hoặc lỗi khác)
-    if (!res.ok) {
-      chestWrapper.classList.remove('shaking'); // Dừng lắc ngay lập tức
-      alert(data.message || 'Lỗi khi mở rương!');
+  // 3. MỞ RƯƠNG
+  async function openChest() {
+    if (user.opened) {
+      showLetter();
       return;
     }
 
-    // Nếu thành công -> Chờ hiệu ứng lắc đủ 1s rồi mở thư
-    setTimeout(() => {
+    const chestWrapper = document.getElementById('chestWrapper');
+    chestWrapper.classList.add('shaking');
+
+    try {
+      const res = await fetch('/api/chest/open', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: userId })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        chestWrapper.classList.remove('shaking');
+        alert(data.message || 'Lỗi khi mở rương!');
+        return;
+      }
+
+      setTimeout(() => {
+        chestWrapper.classList.remove('shaking');
+
+        user.opened = true;
+        Object.assign(user, data.user);
+        currentTeammates = data.teammates || [];
+        localStorage.setItem('currentUser', JSON.stringify(user));
+
+        updateWelcomeName(user);
+
+        const targetClass = data.user.className || data.user.chidoan;
+        renderOpenedState(targetClass);
+        triggerConfetti();
+        showLetter();
+      }, 1000);
+
+    } catch (err) {
       chestWrapper.classList.remove('shaking');
-
-      user.opened = true;
-      Object.assign(user, data.user);
-      currentTeammates = data.teammates || [];
-      localStorage.setItem('currentUser', JSON.stringify(user));
-
-      const targetClass = data.user.className || data.user.chidoan;
-      renderOpenedState(targetClass);
-      triggerConfetti();
-      showLetter();
-    }, 1000);
-
-  } catch (err) {
-    chestWrapper.classList.remove('shaking');
-    console.error('Lỗi kết nối:', err);
-    alert('Không thể kết nối đến máy chủ!');
+      console.error('Lỗi kết nối:', err);
+      alert('Không thể kết nối đến máy chủ!');
+    }
   }
-}
 
   function renderOpenedState(className) {
     document.getElementById('treasureChest').classList.add('open');
@@ -178,45 +204,54 @@ async function openChest() {
     closeLetter();
   }
 
-  // 3. RENDER NỘI DUNG LÁ THƯ
+  // 4. RENDER NỘI DUNG LÁ THƯ
   function showLetter() {
-    // Gán thông tin cá nhân (ưu tiên className, nếu trống lấy chidoan)
     const targetClass = user.className || user.chidoan || 'Chưa phân công';
     document.getElementById('letterClass').innerText = targetClass;
-    document.getElementById('letterHolyName').innerText = user.holyName ? user.holyName + ' ' : '';
-    document.getElementById('letterFullname').innerText = user.fullname || user.fullName || '';
+    
+    const myHoly = user.holyName || user.holyname ? (user.holyName || user.holyname) + ' ' : '';
+    const myName = user.fullname || user.fullName || user.name || '';
+    document.getElementById('letterHolyName').innerText = myHoly;
+    document.getElementById('letterFullname').innerText = myName;
     document.getElementById('letterSubrole').innerText = user.subrole ? `(${user.subrole})` : '';
 
     // Render danh sách Anh/Chị cùng lớp
     const teammatesListEl = document.getElementById('teammatesList');
     teammatesListEl.innerHTML = '';
 
-    if (currentTeammates && currentTeammates.length > 0) {
-      currentTeammates.forEach(mate => {
+    const validTeammates = (currentTeammates || []).filter(mate => {
+      const mateId = mate._id || mate.id;
+      const myId = user._id || user.id;
+      if (mateId && myId) return mateId !== myId;
+
+      const mateName = (mate.fullname || mate.fullName || mate.name || '').trim().toLowerCase();
+      return mateName !== myName.trim().toLowerCase();
+    });
+
+    if (validTeammates.length > 0) {
+      validTeammates.forEach(mate => {
         const li = document.createElement('li');
-        const holy = mate.holyName ? `${mate.holyName} ` : '';
-        const role = mate.subrole ? ` — <i>${mate.subrole}</i>` : '';
-        li.innerHTML = `• ${holy}<b>${mate.fullname}</b>${role}`;
+        const holy = mate.holyName || mate.holyname ? `${mate.holyName || mate.holyname} ` : '';
+        const name = mate.fullname || mate.fullName || mate.name || '';
+
+        // 🌟 BỎ CHỮ CHI ĐOÀN CHƯA XẾP BẰNG LOGIC KIỂM TRA
+        const rawRole = mate.subrole || mate.chidoan || '';
+        const isUnassignedRole = !rawRole || rawRole.toLowerCase().includes('chưa xếp') || rawRole.toLowerCase().includes('chua xep');
+        
+        const role = (!isUnassignedRole && rawRole !== '—') ? ` — <i>${rawRole}</i>` : '';
+
+        li.innerHTML = `• ${holy}<b>${name}</b>${role}`;
         teammatesListEl.appendChild(li);
       });
     } else {
       teammatesListEl.innerHTML = '<li><i>Chưa có thành viên khác trong lớp</i></li>';
     }
 
-    // Hiện popup lá thư
     document.getElementById('letterOverlay').classList.remove('hidden');
-
-    // 🌟 Ẩn khung main-container phía sau để triệt tiêu vệt mờ vuông
-    const mainContainer = document.querySelector('.main-container');
-    if (mainContainer) mainContainer.style.opacity = '0';
   }
 
   function closeLetter() {
     document.getElementById('letterOverlay').classList.add('hidden');
-
-    // 🌟 Hiện lại khung main-container bình thường
-    const mainContainer = document.querySelector('.main-container');
-    if (mainContainer) mainContainer.style.opacity = '1';
   }
 
   function triggerConfetti() {

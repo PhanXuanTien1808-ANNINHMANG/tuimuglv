@@ -7,23 +7,31 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
-    body { background: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; }
+    body { 
+      background: #f4f6f9; 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      margin: 0; 
+      padding: 20px; 
+    }
     
     .admin-container {
       display: flex;
       gap: 20px;
       max-width: 1400px;
+      width: 100%;
       margin: 0 auto;
       align-items: flex-start;
+      box-sizing: border-box;
     }
 
-    /* CỘT BÊN TRÁI: BẢNG DỮ LIỆU */
     .left-panel {
-      flex: 3;
+      flex: 1 1 auto;
+      min-width: 0;
       background: #ffffff;
       padding: 24px;
       border-radius: 16px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      box-sizing: border-box;
     }
 
     .panel-header {
@@ -35,19 +43,62 @@
 
     .panel-header h2 { margin: 0; color: #2d3436; font-size: 1.5rem; }
 
-    /* 🌟 KHUNG CHỨA BẢNG TẠO THANH TRƯỢT TỰ ĐỘNG LĂN LÊN/XUỐNG */
-    .table-scroll-container {
-      max-height: 600px; /* Giới hạn chiều cao bảng */
-      overflow-y: auto;  /* Tạo thanh trượt đứng khi dài */
-      border: 1px solid #edf2f7;
-      border-radius: 8px;
+    /* KHUNG TÌM KIẾM VÀ BỘ LỌC */
+    .filter-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
     }
 
-    /* BẢNG DỮ LIỆU INLINE EDITING */
-    .admin-table { width: 100%; border-collapse: collapse; }
-    .admin-table th, .admin-table td { padding: 10px 8px; border-bottom: 1px solid #edf2f7; text-align: left; font-size: 0.9rem; vertical-align: middle; }
+    .search-input {
+      flex: 1;
+      min-width: 200px;
+      padding: 9px 14px;
+      border: 1px solid #dfe6e9;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: #0984e3; }
+
+    .sort-select {
+      padding: 9px 14px;
+      border: 1px solid #dfe6e9;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #2d3436;
+      background: #ffffff;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .table-scroll-container {
+      max-height: 600px;
+      overflow-y: auto;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid #edf2f7;
+      border-radius: 8px;
+      width: 100%;
+    }
+
+    .admin-table { 
+      width: 100%; 
+      min-width: 680px; 
+      border-collapse: collapse; 
+    }
     
-    /* Sticky header để giữ tiêu đề khi lăn chuột */
+    .admin-table th, .admin-table td { 
+      padding: 10px 8px; 
+      border-bottom: 1px solid #edf2f7; 
+      text-align: left; 
+      font-size: 0.9rem; 
+      vertical-align: middle; 
+    }
+    
     .admin-table th { 
       background: #0984e3; 
       color: white; 
@@ -74,7 +125,6 @@
     .badge-success { background: #e6fffa; color: #00b894; border: 1px solid #b2f5ea; }
     .badge-pending { background: #fff5f5; color: #e53e3e; border: 1px solid #fed7d7; }
 
-    /* NÚT THAO TÁC BẢNG */
     .btn-tbl {
       padding: 5px 10px;
       border: none;
@@ -91,15 +141,14 @@
     .btn-tbl-cancel { background: #b2bec3; color: white; }
     .btn-tbl-delete { background: #ff7675; color: white; }
 
-    /* CỘT BÊN PHẢI: KHUNG CHỨC NĂNG DỌC */
     .right-panel {
-      flex: 1;
+      flex: 0 0 300px;
       display: flex;
       flex-direction: column;
       gap: 16px;
-      min-width: 300px;
       position: sticky;
       top: 20px;
+      box-sizing: border-box;
     }
 
     .card-action {
@@ -132,7 +181,7 @@
     .btn-save-all { background: #00b894; color: white; }
     .btn-cancel-all { background: #636e72; color: white; }
     .btn-excel { background: #0984e3; color: white; }
-    .btn-delete-selected { background: #d63031; color: white; } /* 🌟 NÚT XÓA MỤC ĐÃ CHỌN */
+    .btn-delete-selected { background: #d63031; color: white; }
     .btn-reset-selected { background: #e17055; color: white; }
     .btn-reset-all { background: #d63031; color: white; }
     .btn-lock { background: #6c5ce7; color: white; }
@@ -147,13 +196,23 @@
     .status-locked { background: #ffe3e3; color: #c0392b; }
     .status-unlocked { background: #d4edda; color: #155724; }
 
-    /* MODAL THÊM GLV */
     .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
     .modal-content { background: white; padding: 24px; border-radius: 16px; width: 420px; max-width: 90%; }
     .form-group { margin-bottom: 12px; }
     .form-group label { display: block; font-weight: bold; margin-bottom: 4px; font-size: 0.9rem; }
     .form-group input { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+
+    @media screen and (max-width: 900px) {
+      body { padding: 10px 8px; }
+      .admin-container { gap: 12px; }
+      .left-panel { padding: 14px; }
+      .right-panel { flex: 0 0 240px; gap: 10px; }
+      .card-action { padding: 12px; }
+      .card-action h4 { font-size: 0.95rem; }
+      .btn-action { padding: 9px 6px; font-size: 0.82rem; }
+      .panel-header h2 { font-size: 1.1rem; }
+    }
   </style>
 </head>
 <body>
@@ -167,7 +226,21 @@
         <a href="login.html" onclick="logoutAdmin()" style="color: #636e72; text-decoration: none; font-weight: bold;">Đăng xuất</a>
       </div>
 
-      <!-- 🌟 CONTAINER CÓ THANH TRƯỢT ĐỨNG -->
+      <!-- 🌟 KHUNG TÌM KIẾM & BỘ LỌC ĐỘNG -->
+      <div class="filter-bar">
+        <input type="text" id="searchInput" class="search-input" oninput="applyFilterAndSort()" placeholder="🔍 Tìm kiếm theo Họ Tên hoặc Tên Thánh...">
+        
+        <select id="sortOption" class="sort-select" onchange="applyFilterAndSort()">
+          <option value="default">-- Sắp xếp Mặc định --</option>
+          <option value="name-asc">🔤 Tên (A → Z)</option>
+          <option value="sector-asc">🏫 Ngành & Lớp (Chiên → Dự Trưởng)</option>
+        </select>
+      </div>
+
+      <!-- 🌟 DATALIST LỚP ĐỘNG (JS SẼ TỰ TẠO DỰA TRÊN DỮ LIỆU) -->
+      <datalist id="classListOptions"></datalist>
+
+      <!-- CONTAINER CÓ THANH TRƯỢT ĐỨNG & NGANG -->
       <div class="table-scroll-container">
         <table class="admin-table">
           <thead>
@@ -220,7 +293,6 @@
         <button class="btn-action btn-excel" onclick="document.getElementById('excelInput').click()">
           📊 Tải File Excel
         </button>
-        <!-- 🌟 NÚT XÓA MỤC ĐÃ CHỌN -->
         <button class="btn-action btn-delete-selected" onclick="deleteSelected()">
           🗑️ Xóa Mục Đã Chọn
         </button>
@@ -259,7 +331,8 @@
       </div>
       <div class="form-group">
         <label>Lớp / Phân Công:</label>
-        <input type="text" id="addClassName" placeholder="VD: Nghĩa 2A">
+        <!-- Ô nhập vừa gõ vừa chọn gợi ý -->
+        <input type="text" id="addClassName" list="classListOptions" placeholder="Gõ hoặc chọn lớp từ danh sách">
       </div>
       <div class="form-group">
         <label>Chi Đoàn (Tùy chọn):</label>
@@ -288,6 +361,9 @@
     let allUsers = [];
     let isBulkEditing = false;
 
+    // Danh sách thứ tự ưu tiên các Ngành Thiếu Nhi
+    const SECTOR_ORDER = ['chiên', 'ấu', 'thiếu', 'nghĩa', 'hiệp', 'dự trưởng'];
+
     async function initAdmin() {
       await fetchUsers();
       await fetchLockStatus();
@@ -298,19 +374,109 @@
         const res = await fetch('/api/admin/users');
         if (res.ok) {
           allUsers = await res.json();
-          renderTable(allUsers);
+          updateClassDatalist(); // 🌟 Tự động quét và sinh danh sách lớp gợi ý
+          applyFilterAndSort(); // 🌟 Áp dụng bộ lọc & render bảng
         }
       } catch (err) {
         console.error('Lỗi tải danh sách GLV:', err);
       }
     }
 
+    // 🌟 QUÉT VÀ TẠO DANH SÁCH LỚP DYNAMIC CHO DATALIST
+    function updateClassDatalist() {
+      const datalist = document.getElementById('classListOptions');
+      if (!datalist) return;
+
+      // Lấy danh sách lớp duy nhất (Loại bỏ các lớp rỗng hoặc "—")
+      const classesSet = new Set();
+      allUsers.forEach(u => {
+        const cls = (u.className || '').trim();
+        if (cls && cls !== '—') classesSet.add(cls);
+      });
+
+      // Chuyển set thành mảng và sắp xếp theo thứ tự Ngành
+      const sortedClasses = Array.from(classesSet).sort((a, b) => compareClasses(a, b));
+
+      datalist.innerHTML = sortedClasses.map(cls => `<option value="${cls}">`).join('');
+    }
+
+    // 🌟 LOGIC TÌM KIẾM VÀ SẮP XẾP
+  // 🌟 LOGIC TÌM KIẾM VÀ SẮP XẾP (ĐÃ CẬP NHẬT: CHƯA XẾP LỚP LUÔN Ở CUỐI)
+ // 🌟 1. KIỂM TRA LỚP CHƯA XẾP BẰNG HÀM TẬP TRUNG
+    function isUnassignedClass(classNameStr) {
+      const cls = (classNameStr || '').trim().toLowerCase();
+      return !cls || cls === '—' || cls.includes('chưa xếp') || cls.includes('chua xep');
+    }
+
+    // 🌟 2. HÀM SO SÁNH LỚP THEO THỨ TỰ NGÀNH (CHƯA XẾP LỚP LUÔN Ở CUỐI)
+    function compareClasses(classAStr, classBStr) {
+      const a = (classAStr || '').trim().toLowerCase();
+      const b = (classBStr || '').trim().toLowerCase();
+
+      const isUnassignedA = isUnassignedClass(classAStr);
+      const isUnassignedB = isUnassignedClass(classBStr);
+
+      // Đẩy chưa xếp lớp xuống dưới cùng
+      if (isUnassignedA && !isUnassignedB) return 1;
+      if (!isUnassignedA && isUnassignedB) return -1;
+      if (isUnassignedA && isUnassignedB) return 0;
+
+      let indexA = SECTOR_ORDER.findIndex(sec => a.includes(sec));
+      let indexB = SECTOR_ORDER.findIndex(sec => b.includes(sec));
+
+      if (indexA === -1) indexA = 98; 
+      if (indexB === -1) indexB = 98;
+
+      if (indexA !== indexB) {
+        return indexA - indexB;
+      }
+
+      // Cùng ngành -> So sánh chữ và số (VD: Chiên 1A < Chiên 1B < Chiên 2A)
+      return a.localeCompare(b, 'vi', { numeric: true, sensitivity: 'base' });
+    }
+
+    // 🌟 3. LOGIC TÌM KIẾM VÀ SẮP XẾP CHUẨN ĐỒNG BỘ
+    function applyFilterAndSort() {
+      const keyword = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+      const sortOption = document.getElementById('sortOption').value;
+
+      // Lọc danh sách không bị sót bất kỳ trường thông tin tên nào
+      let filteredUsers = allUsers.filter(u => {
+        const fullname = (u.fullname || u.fullName || u.name || '').toLowerCase();
+        const holyName = (u.holyName || u.holyname || '').toLowerCase();
+        
+        if (!keyword) return true; // Nếu chưa gõ tìm kiếm -> Hiển thị TẤT CẢ
+        return fullname.includes(keyword) || holyName.includes(keyword);
+      });
+
+      // Xử lý Sắp Xếp
+      if (sortOption === 'name-asc') {
+        filteredUsers.sort((a, b) => {
+          const isUnassignedA = isUnassignedClass(a.className);
+          const isUnassignedB = isUnassignedClass(b.className);
+
+          if (isUnassignedA && !isUnassignedB) return 1;
+          if (!isUnassignedA && isUnassignedB) return -1;
+
+          // So sánh theo TÊN CHÍNH (Từ cuối cùng trong Họ và Tên)
+          const nameA = (a.fullname || a.fullName || a.name || '').trim().split(' ').pop();
+          const nameB = (b.fullname || b.fullName || b.name || '').trim().split(' ').pop();
+          return nameA.localeCompare(nameB, 'vi', { sensitivity: 'base' });
+        });
+      } else if (sortOption === 'sector-asc') {
+        filteredUsers.sort((a, b) => compareClasses(a.className, b.className));
+      }
+
+      renderTable(filteredUsers);
+    }
+
+    // 🌟 4. HÀM RENDER BẢNG BẮT TRỌN VẸN DỮ LIỆU CỦA MỌI USER
     function renderTable(users) {
       const tbody = document.getElementById('userTableBody');
       tbody.innerHTML = '';
 
       if (!users || users.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 20px;">Chưa có dữ liệu Giáo Lý Viên</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 20px;">Không tìm thấy dữ liệu phù hợp</td></tr>`;
         return;
       }
 
@@ -322,14 +488,19 @@
           ? `<span class="badge badge-success">Đã Mở</span>`
           : `<span class="badge badge-pending">Chưa Mở</span>`;
 
+        // Bắt lấy thông tin hiển thị chính xác
+        const displayName = u.fullname || u.fullName || u.name || '—';
+        const displayHoly = u.holyName || u.holyname || '—';
+        const displayDob = u.dateOfBirth || u.dob || '—';
+
         if (isBulkEditing) {
           tr.innerHTML = `
             <td style="text-align: center;"><input type="checkbox" disabled></td>
             <td style="text-align: center; font-weight: bold; color: #636e72;">${index + 1}</td>
-            <td><input type="text" class="table-input bulk-holy" data-id="${u._id}" value="${u.holyName || ''}"></td>
-            <td><input type="text" class="table-input bulk-fullname" data-id="${u._id}" value="${u.fullname || u.fullName || ''}"></td>
-            <td><input type="text" class="table-input bulk-dob" data-id="${u._id}" value="${u.dateOfBirth || u.dob || ''}"></td>
-            <td><input type="text" class="table-input bulk-class" data-id="${u._id}" value="${u.className || ''}"></td>
+            <td><input type="text" class="table-input bulk-holy" data-id="${u._id}" value="${displayHoly !== '—' ? displayHoly : ''}"></td>
+            <td><input type="text" class="table-input bulk-fullname" data-id="${u._id}" value="${displayName !== '—' ? displayName : ''}"></td>
+            <td><input type="text" class="table-input bulk-dob" data-id="${u._id}" value="${displayDob !== '—' ? displayDob : ''}"></td>
+            <td><input type="text" list="classListOptions" class="table-input bulk-class" data-id="${u._id}" value="${u.className || ''}"></td>
             <td><input type="text" class="table-input bulk-chidoan" data-id="${u._id}" value="${u.chidoan || ''}" placeholder="Tự xếp"></td>
             <td style="text-align: center;">${statusBadge}</td>
             <td style="text-align: center;">
@@ -342,9 +513,9 @@
               <input type="checkbox" class="user-cb" value="${u._id}">
             </td>
             <td style="text-align: center; font-weight: bold; color: #636e72;">${index + 1}</td>
-            <td>${u.holyName || '—'}</td>
-            <td><b>${u.fullname || u.fullName || ''}</b></td>
-            <td>${u.dateOfBirth || u.dob || '—'}</td>
+            <td>${displayHoly}</td>
+            <td><b>${displayName}</b></td>
+            <td>${displayDob}</td>
             <td>${u.className || '—'}</td>
             <td>${u.chidoan || u.subrole || '—'}</td>
             <td style="text-align: center;">${statusBadge}</td>
@@ -359,7 +530,6 @@
       });
     }
 
-    // 🌟 CHỨC NĂNG XÓA MỤC ĐÃ CHỌN
     async function deleteSelected() {
       const selectedIds = Array.from(document.querySelectorAll('.user-cb:checked')).map(cb => cb.value);
       if (selectedIds.length === 0) return alert('Vui lòng chọn ít nhất 1 Giáo Lý Viên để xóa!');
@@ -383,7 +553,7 @@
 
     function enableBulkEdit() {
       isBulkEditing = true;
-      renderTable(allUsers);
+      applyFilterAndSort();
       document.getElementById('bulkEditControls').innerHTML = `
         <button class="btn-action btn-save-all" onclick="saveBulkEdit()">
           💾 Cập Nhật Tất Cả (Lưu 1 Lần)
@@ -396,7 +566,7 @@
 
     function cancelBulkEdit() {
       isBulkEditing = false;
-      renderTable(allUsers);
+      applyFilterAndSort();
       document.getElementById('bulkEditControls').innerHTML = `
         <button class="btn-action btn-edit-all" onclick="enableBulkEdit()">
           ✏️ Sửa Tất Cả Cùng Lúc
@@ -460,12 +630,12 @@
         <td><input type="text" class="table-input" id="edit-holy-${id}" value="${u.holyName || ''}"></td>
         <td><input type="text" class="table-input" id="edit-fullname-${id}" value="${u.fullname || u.fullName || ''}"></td>
         <td><input type="text" class="table-input" id="edit-dob-${id}" value="${u.dateOfBirth || u.dob || ''}"></td>
-        <td><input type="text" class="table-input" id="edit-class-${id}" value="${u.className || ''}"></td>
+        <td><input type="text" list="classListOptions" class="table-input" id="edit-class-${id}" value="${u.className || ''}"></td>
         <td><input type="text" class="table-input" id="edit-chidoan-${id}" value="${u.chidoan || ''}" placeholder="Tự xếp"></td>
         <td style="text-align: center;">—</td>
         <td style="text-align: center; white-space: nowrap;">
           <button class="btn-tbl btn-tbl-save" onclick="saveSingleRowEdit('${id}')">💾 Lưu</button>
-          <button class="btn-tbl btn-tbl-cancel" onclick="renderTable(allUsers)">Hủy</button>
+          <button class="btn-tbl btn-tbl-cancel" onclick="applyFilterAndSort()">Hủy</button>
         </td>
       `;
     }

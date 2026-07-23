@@ -6,16 +6,25 @@
 }
 
 /* ==========================================
-   1. HÌNH NỀN FULL MÀN HÌNH
+   1. HÌNH NỀN FULL MÀN HÌNH & TỐI ƯU CUỘN DI ĐỘNG (USER)
    ========================================== */
+html {
+  height: 100%;
+  overflow-y: auto;
+}
+
 body {
   position: relative;
   min-height: 100vh;
+  min-height: -webkit-fill-available; /* Tối ưu chiều cao màn hình cho iOS Safari */
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 15px;
-  overflow: hidden;
+  overflow-y: auto !important; /* Bắt buộc cho phép cuộn dọc */
+  -webkit-overflow-scrolling: touch; /* Cuộn mượt mà trên iPhone/iPad */
+  overscroll-behavior-y: contain; /* Bật tính năng kéo vuốt làm mới trang */
+  touch-action: pan-y;
 }
 
 body::before {
@@ -35,7 +44,7 @@ body::before {
 }
 
 /* ==========================================
-   2. KHUNG CHÍNH (GLASSMORPHISM)
+   2. KHUNG CHÍNH USER (GLASSMORPHISM)
    ========================================== */
 .main-container {
   width: 100%;
@@ -44,10 +53,13 @@ body::before {
   background: rgba(255, 255, 255, 0.78) !important;
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
-  padding: 25px 20px;
+  padding: 25px 20px 40px 20px; /* Padding dưới giúp không dính viền khi cuộn */
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.5);
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.18);
+  margin: auto;
+  touch-action: pan-y; /* Cho phép thao tác vuốt dọc tự nhiên */
+  transition: opacity 0.3s ease;
 }
 
 .logo-box {
@@ -201,7 +213,7 @@ body::before {
 }
 
 /* ==========================================
-   4. POPUP LÁ THƯ CUỘN NẰM NGANG (TONG MÀU SÁNG & ẤM ÁP)
+   4. POPUP LÁ THƯ CUỘN (TỐI ƯU KHÔNG ĐƠ MOBILE)
    ========================================== */
 .letter-overlay {
   position: fixed;
@@ -209,33 +221,33 @@ body::before {
   left: 0;
   width: 100vw;
   height: 100vh;
-/* 🌟 ĐỔI SANG MÀU TRẮNG TRONG SUỐT NỀN SÁNG (15%) */
   background: rgba(255, 255, 255, 0.15); 
-  
-  /* Giảm mờ từ 8px xuống 4px giúp ảnh nền đằng sau vừa sáng vừa nét */
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
-  
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 15px;
   z-index: 99999;
+  overflow-y: auto !important; /* Cho phép cuộn popup */
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
-/* Thẻ bao ngoài: Đổi sang màu Đỏ Đô / Đỏ Giáng Sinh tươi tắn & Ấm áp */
 .letter-card {
-  background: linear-gradient(145deg, #d63031, #b33939); /* Tone Đỏ trang trọng, ấm áp */
-  border: 2px solid #f1c40f; /* Viền vàng kim nổi bật */
+  background: linear-gradient(145deg, #d63031, #b33939);
+  border: 2px solid #f1c40f;
   border-radius: 24px;
   padding: 24px 20px;
   width: 100%;
   max-width: 380px;
   text-align: center;
   color: #ffffff;
-  /* Bóng phát sáng vàng kim quanh thiệp */
   box-shadow: 0 0 30px rgba(241, 196, 15, 0.4), 0 15px 35px rgba(0, 0, 0, 0.3);
   animation: popGlow 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  max-height: 85vh;
+  overflow-y: auto !important; /* Cuộn nội dung bên trong thiệp nếu màn hình nhỏ */
+  -webkit-overflow-scrolling: touch;
 }
 
 @keyframes popGlow {
@@ -249,7 +261,6 @@ body::before {
   }
 }
 
-/* Tiêu đề màu vàng tươi nổi bật trên nền đỏ */
 .title-gold {
   color: #ffeaa7;
   font-size: 1.2rem;
@@ -268,7 +279,6 @@ body::before {
   letter-spacing: 1px;
 }
 
-/* Cuộn thư giấy trắng sáng bên trong */
 .scroll-canvas {
   background: #ffffff;
   border-top: 5px solid #fdcb6e;
@@ -288,7 +298,6 @@ body::before {
   text-transform: uppercase;
 }
 
-/* Tên lớp màu đỏ đậm nổi bật */
 .class-name {
   color: #d63031; 
   font-size: 1.9rem;
@@ -316,7 +325,6 @@ body::before {
   margin: 12px 0;
 }
 
-/* Khung hiển thị Anh/Chị cùng lớp */
 .teammates-box {
   text-align: left;
   background: #f8f9fa;
@@ -344,12 +352,6 @@ body::before {
   line-height: 1.35;
 }
 
-.teammates-list i {
-  color: #b2bec3;
-  font-size: 0.78rem;
-}
-
-/* Nút Đóng màu trắng tươi sáng, dễ bấm */
 .btn-close-letter {
   background: #ffffff;
   border: none;
@@ -367,4 +369,210 @@ body::before {
   background: #ffeaa7;
   color: #d63031;
   transform: scale(1.05);
+}
+
+/* ==========================================
+   5. TỐI ƯU ADMIN RESPONSIVE & BỘ LỌC TÌM KIẾM
+   ========================================== */
+.admin-container {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 20px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  align-items: flex-start;
+  box-sizing: border-box;
+}
+
+.left-panel {
+  flex: 1 1 auto;
+  min-width: 0; /* Rất quan trọng: Giúp bảng kéo vuốt ngang được */
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.panel-header h2 { margin: 0; color: #2d3436; font-size: 1.5rem; }
+
+/* BỘ LỌC TÌM KIẾM & SẮP XẾP ADMIN */
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 9px 14px;
+  border: 1px solid #dfe6e9;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.search-input:focus { border-color: #0984e3; }
+
+.sort-select {
+  padding: 9px 14px;
+  border: 1px solid #dfe6e9;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2d3436;
+  background: #ffffff;
+  cursor: pointer;
+  outline: none;
+}
+
+/* KHUNG CHỨA BẢNG KÉO VUỐT NGANG & DỌC */
+.table-scroll-container {
+  max-height: 600px;
+  overflow-y: auto;
+  overflow-x: auto; /* Cho phép kéo qua kéo lại */
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid #edf2f7;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.admin-table { 
+  width: 100%; 
+  min-width: 680px; 
+  border-collapse: collapse; 
+}
+
+.admin-table th, .admin-table td { 
+  padding: 10px 8px; 
+  border-bottom: 1px solid #edf2f7; 
+  text-align: left; 
+  font-size: 0.9rem; 
+  vertical-align: middle; 
+}
+
+.admin-table th { 
+  background: #0984e3; 
+  color: white; 
+  font-weight: 600; 
+  white-space: nowrap; 
+  position: sticky; 
+  top: 0; 
+  z-index: 10;
+}
+
+.table-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #0984e3;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 0.9rem;
+  outline: none;
+  background: #f8f9fa;
+}
+.table-input:focus { background: #fff; border-color: #00b894; }
+
+.badge { padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; display: inline-block; white-space: nowrap; }
+.badge-success { background: #e6fffa; color: #00b894; border: 1px solid #b2f5ea; }
+.badge-pending { background: #fff5f5; color: #e53e3e; border: 1px solid #fed7d7; }
+
+.btn-tbl {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-right: 4px;
+  transition: opacity 0.2s;
+}
+.btn-tbl:hover { opacity: 0.8; }
+.btn-tbl-edit { background: #fdcb6e; color: #2d3436; }
+.btn-tbl-save { background: #00b894; color: white; }
+.btn-tbl-cancel { background: #b2bec3; color: white; }
+.btn-tbl-delete { background: #ff7675; color: white; }
+
+.right-panel {
+  flex: 0 0 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 20px;
+  box-sizing: border-box;
+}
+
+.card-action {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.card-action h4 { margin: 0 0 12px 0; color: #2d3436; font-size: 1.1rem; border-bottom: 2px solid #f1f2f6; padding-bottom: 8px; }
+
+.btn-action {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: transform 0.1s, opacity 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-action:active { transform: scale(0.98); }
+
+.btn-add { background: #00b894; color: white; }
+.btn-edit-all { background: #e17055; color: white; }
+.btn-save-all { background: #00b894; color: white; }
+.btn-cancel-all { background: #636e72; color: white; }
+.btn-excel { background: #0984e3; color: white; }
+.btn-delete-selected { background: #d63031; color: white; }
+.btn-reset-selected { background: #e17055; color: white; }
+.btn-reset-all { background: #d63031; color: white; }
+.btn-lock { background: #6c5ce7; color: white; }
+
+.status-box {
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 10px;
+}
+.status-locked { background: #ffe3e3; color: #c0392b; }
+.status-unlocked { background: #d4edda; color: #155724; }
+
+.modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+.modal-content { background: white; padding: 24px; border-radius: 16px; width: 420px; max-width: 90%; }
+.form-group { margin-bottom: 12px; }
+.form-group label { display: block; font-weight: bold; margin-bottom: 4px; font-size: 0.9rem; }
+.form-group input { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+
+/* MEDIA QUERY CHO MAN HINH NHỎ */
+@media screen and (max-width: 900px) {
+  body { padding: 10px 8px; }
+  .admin-container { gap: 12px; }
+  .left-panel { padding: 14px; }
+  .right-panel { flex: 0 0 240px; gap: 10px; }
+  .card-action { padding: 12px; }
+  .card-action h4 { font-size: 0.95rem; }
+  .btn-action { padding: 9px 6px; font-size: 0.82rem; }
+  .panel-header h2 { font-size: 1.1rem; }
 }
